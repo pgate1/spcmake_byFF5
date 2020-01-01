@@ -1,6 +1,6 @@
 /*
 	spcmake_byFF5
-	Copyright (c) 2020 pgate1
+	Copyright (c) 2019 pgate1
 */
 
 #include<stdio.h>
@@ -866,7 +866,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	// SPC作成年月日(16進)
 	time_t timer = time(NULL);
 	struct tm *local;
-    local = localtime(&timer); // 地方時に変換
+	local = localtime(&timer); // 地方時に変換
 	header[0x9E] = local->tm_mday; // 日
 	header[0x9F] = local->tm_mon+1; // 月
 	*(uint16*)(header+0xA0) = local->tm_year+1900; // 年
