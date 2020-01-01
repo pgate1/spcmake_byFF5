@@ -1,11 +1,4 @@
-﻿/*
-ff5test.spcをspcmake_byFF5.exeと同じ場所に置いてください。
-FinalFantasy5.romも同じ場所に置いてください。
-spcmake_byFF5.batの入力mmlファイル名と出力spcファイル名を編集してください。
-mmlを書いてspcmake_byFF5.batダブルクリックでspcを生成します。
-*/
-
-#songname "DaDa"
+﻿#songname "DaDa"
 #gametitle "DoDo"
 #artist "Yohei Shiokawa"
 #dumper "pgate1"
