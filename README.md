@@ -1,2 +1,2 @@
 # spcmake_byFF5
-make .spc by FinalFantasy5.rom
+make a FFV taste spc by your mml.
