@@ -851,7 +851,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	header[0x27] = 0x00; // A
 	header[0x28] = 0x00; // X
 	header[0x29] = 0x00; // Y
-	header[0x2A] = 0x00; // 0B PSW
+	header[0x2A] = 0x00; // PSW
 	header[0x2B] = 0xFD; // SP
 
 	{
