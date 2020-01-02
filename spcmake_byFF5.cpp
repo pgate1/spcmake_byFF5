@@ -78,53 +78,6 @@ public:
 	}
 };
 
-class AkaoSoundDriver
-{
-public:
-	uint32 driver_size;
-	uint8 *driver;
-
-	// 効果音シーケンス
-	uint32 eseq_size;
-	uint8 *eseq;
-
-	// 常駐波形
-	uint32 sbrr_size;
-	uint8 *sbrr;
-	uint16 sbrr_start[16]; // スタートアドレスとループアドレス
-	uint16 sbrr_adsr[8];
-	uint16 sbrr_rate[8];
-
-	// 波形
-	uint32 brr_size[35];
-	uint8 *brr[35];
-	uint16 brr_loop[35];
-	uint16 brr_rate[35];
-	uint16 brr_adsr[35];
-
-	AkaoSoundDriver()
-	{
-		driver = NULL;
-		eseq = NULL;
-		sbrr = NULL;
-		int i;
-		for(i=0; i<35; i++){
-			brr[i] = NULL;
-		}
-	}
-	~AkaoSoundDriver()
-	{
-		if(driver!=NULL) delete[] driver;
-		if(eseq!=NULL) delete[] eseq;
-		if(sbrr!=NULL) delete[] sbrr;
-		int i;
-		for(i=0; i<35; i++){
-			if(brr[i]!=NULL) delete[] brr[i];
-		}
-	}
-
-};
-
 int line;
 
 int skip_space(const string &str, int p)
@@ -708,6 +661,52 @@ int get_sequence(string &str, SPC &spc)
 */
 	return 0;
 }
+
+class AkaoSoundDriver
+{
+public:
+	uint32 driver_size;
+	uint8 *driver;
+
+	// 効果音シーケンス
+	uint32 eseq_size;
+	uint8 *eseq;
+
+	// 常駐波形
+	uint32 sbrr_size;
+	uint8 *sbrr;
+	uint16 sbrr_start[16]; // スタートアドレスとループアドレス
+	uint16 sbrr_adsr[8];
+	uint16 sbrr_rate[8];
+
+	// 波形
+	uint32 brr_size[35];
+	uint8 *brr[35];
+	uint16 brr_loop[35];
+	uint16 brr_rate[35];
+	uint16 brr_adsr[35];
+
+	AkaoSoundDriver()
+	{
+		driver = NULL;
+		eseq = NULL;
+		sbrr = NULL;
+		int i;
+		for(i=0; i<35; i++){
+			brr[i] = NULL;
+		}
+	}
+	~AkaoSoundDriver()
+	{
+		if(driver!=NULL) delete[] driver;
+		if(eseq!=NULL) delete[] eseq;
+		if(sbrr!=NULL) delete[] sbrr;
+		int i;
+		for(i=0; i<35; i++){
+			if(brr[i]!=NULL) delete[] brr[i];
+		}
+	}
+};
 
 // FinalFantasy5.romからAkaoサウンドドライバ等取得
 int get_akao(const char *fname, AkaoSoundDriver &asd)
