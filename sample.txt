@@ -35,7 +35,7 @@ D4 90 // パン
 E4 06
 EB d15 //EC d7 ED d7 EE d11 // ADSR
 
-//DE F0 02 DD 11 0B DD 18 0A F1 F2 // ノイズ使用
+//DE F0 02 DD 11 0B DD 18 0A F1 F2 ! // ノイズ使用
 
 L // ここがトラックループ
 [

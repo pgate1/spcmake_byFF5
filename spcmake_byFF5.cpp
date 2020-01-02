@@ -277,7 +277,7 @@ int formatter(string &str, SPC &spc)
 				p--;
 				continue;
 			}
-			// BRR領域がエコーバッファに重なるかチェックする
+			// BRR領域がエコーバッファに重なるのチェックを有効にする
 			if(str.substr(p, 19)=="#brr_echo_overcheck"){
 				spc.f_brr_echo_overcheck = true;
 				int ep = term_end(str, p);
@@ -304,8 +304,7 @@ int formatter(string &str, SPC &spc)
 					return -1;
 				}
 				// 常駐波形でもオクターブ・トランスポーズ・ディチューン設定するから追加
-				// tone追加
-				tone_map[tone_num];
+				tone_map[tone_num]; // tone追加
 
 				// brr_fnameの取得
 				sp = skip_space(str, ep) + 1;
@@ -342,11 +341,9 @@ int formatter(string &str, SPC &spc)
 				int param[8];
 				int param_num;
 				for(param_num=0; param_num<8 && str[ep]!='\0';){
-					// 数字の頭
 					sp = ep;
 					while(str[sp]==' ' || str[sp]=='\t' || str[sp]=='\r') sp++;
 					if(str[sp]=='\n') break; // num==7の時ここで抜ければ正常
-					// 数字の後ろ
 					ep = sp;
 					while(str[ep]!=' ' && str[ep]!='\t' && str[ep]!='\r' && str[ep]!='\n' && str[ep]!='\0') ep++;
 					param[param_num++] = atoi(str.substr(sp, ep-sp).c_str());
@@ -613,7 +610,7 @@ int get_sequence(string &str, SPC &spc)
 			for(lp=p+8; str[lp]!='#'; lp++){
 				if(str.substr(lp, 9)=="jump_dest"){
 					str.erase(lp, 9); // dest削除
-					// ジャンプ先相対値を入れておく
+					// ジャンプ先相対値を入れておく(必須)
 					char buf[10];
 					sprintf(buf, "%02X %02X ", (uint8)jp, (uint8)(jp>>8));
 					str.replace(p, 8, buf); // src置き換え
@@ -669,8 +666,8 @@ public:
 	uint8 *driver;
 
 	// 効果音シーケンス
-	uint32 eseq_size;
-	uint8 *eseq;
+//	uint32 eseq_size;
+//	uint8 *eseq;
 
 	// 常駐波形
 	uint32 sbrr_size;
@@ -689,7 +686,7 @@ public:
 	AkaoSoundDriver()
 	{
 		driver = NULL;
-		eseq = NULL;
+//		eseq = NULL;
 		sbrr = NULL;
 		int i;
 		for(i=0; i<35; i++){
@@ -699,7 +696,7 @@ public:
 	~AkaoSoundDriver()
 	{
 		if(driver!=NULL) delete[] driver;
-		if(eseq!=NULL) delete[] eseq;
+//		if(eseq!=NULL) delete[] eseq;
 		if(sbrr!=NULL) delete[] sbrr;
 		int i;
 		for(i=0; i<35; i++){
@@ -770,9 +767,9 @@ int get_akao(const char *fname, AkaoSoundDriver &asd)
 	// 0x2C00～効果音シーケンスアドレス
 	// 0x3000～効果音シーケンス
 	// 0x4800～常駐波形BRR
-	asd.eseq_size = *(uint16*)(rom+0x41F95);
-	asd.eseq = new uint8[asd.eseq_size];
-	memcpy(asd.eseq, rom+0x041F95+2, asd.eseq_size);
+//	asd.eseq_size = *(uint16*)(rom+0x41F95);
+//	asd.eseq = new uint8[asd.eseq_size];
+//	memcpy(asd.eseq, rom+0x041F95+2, asd.eseq_size);
 //FILE *fp=fopen("out.bin","wb");fwrite(effect_seq,1,size,fp);fclose(fp);
 /*
 {
@@ -792,7 +789,7 @@ for(i=0; i<4*44+1; i++){
 }
 */
 	// 音源BRRの取得
-	// 0x043C6F - 0x043CD7 -> 0x490E ～
+	// 0x043C6F - 0x043CD7 -> 0x490E ～ 必要な場所まで
 	int i;
 	for(i=0; i<0x23; i++){
 		// 先頭2バイトはサイズ
@@ -818,13 +815,13 @@ for(i=0; i<0x23; i++){
 }
 */
 	// 音源レートの取得
-	// 0x043D1E - 0x043D63 -> 0x1A40 ～
+	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F 2byte x 32
 	for(i=0; i<0x23; i++){
 		asd.brr_rate[i] = *(uint16*)(rom+0x043D1E+i*2);
 	}
 
 	// 音源ADSRの取得
-	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～
+	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF 2byte x 32
 	for(i=0; i<0x23; i++){
 		asd.brr_adsr[i] = *(uint16*)(rom+0x043D64+i*2);
 	}
