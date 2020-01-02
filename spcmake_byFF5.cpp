@@ -775,7 +775,23 @@ int get_akao(const char *fname, AkaoSoundDriver &asd)
 	asd.eseq = new uint8[asd.eseq_size];
 	memcpy(asd.eseq, rom+0x041F95+2, asd.eseq_size);
 //FILE *fp=fopen("out.bin","wb");fwrite(effect_seq,1,size,fp);fclose(fp);
-
+/*
+{
+system("mkdir effect");
+char fname[100];
+int i;
+for(i=0; i<4*44+1; i++){
+	sprintf(fname, "effect/ff5_e%02X.txt", i);
+	FILE *fp = fopen(fname, "w");
+	uint32 adrs = *(uint16*)(asd.eseq+i*4) - 0x3000;
+	for(int j=adrs; j<adrs+0x40; j++){
+		fprintf(fp, "%02X ", asd.eseq[0x400+j]);
+		if((j%16)==0) fprintf(fp,"\n");
+	}
+	fclose(fp);
+}
+}
+*/
 	// 音源BRRの取得
 	// 0x043C6F - 0x043CD7 -> 0x490E ～
 	int i;
@@ -828,7 +844,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	memset(header, 0x00, 0x100);
 	memcpy(header, "SNES-SPC700 Sound File Data v0.30", 33);
 	header[0x21] = header[0x22] = header[0x23] = 26;
-	header[0x24] = 0x1E;
+	header[0x24] = 30; // 0x1E
 
 	// SPC700
 	header[0x25] = 0x37; // PCL
@@ -836,7 +852,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	header[0x27] = 0x00; // A
 	header[0x28] = 0x00; // X
 	header[0x29] = 0x00; // Y
-	header[0x2A] = 0x0B; // PSW
+	header[0x2A] = 0x00; // 0B PSW
 	header[0x2B] = 0xFD; // SP
 
 	{
@@ -894,13 +910,13 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	ram[0x01FF] = 0x02; // スタック
 
 	// DSPメモリ
-	uint8 dsp_ram[128];
-	memset(dsp_ram, 0x00, 128);
-	dsp_ram[0x0C] = 0x7F; // MVOL_L
-	dsp_ram[0x1C] = spc.f_surround ? 0x80 : 0x7F; // MVOL_R
-	dsp_ram[0x5D] = 0x1B; // DIR
-	dsp_ram[0x6D] = 0xD2; // ESA
-	dsp_ram[0x7D] = 0x05; // EDL
+	uint8 dsp_reg[128];
+	memset(dsp_reg, 0x00, 128);
+	dsp_reg[0x0C] = 0x7F; // MVOL_L
+	dsp_reg[0x1C] = spc.f_surround ? 0x80 : 0x7F; // MVOL_R
+	dsp_reg[0x5D] = 0x1B; // DIR
+	dsp_reg[0x6D] = 0xD2; // ESA
+	dsp_reg[0x7D] = 0x05; // EDL
 
 
 	// ベースアドレス
@@ -1121,7 +1137,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	}
 	fwrite(header, 1, 0x100, ofp);
 	fwrite(ram, 1, 0x10000, ofp);
-	fwrite(dsp_ram, 1, 128, ofp);
+	fwrite(dsp_reg, 1, 128, ofp);
 	fclose(ofp);
 	printf("%s を生成しました.\n", spc_fname);
 /*
