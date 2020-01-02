@@ -3,6 +3,9 @@
 Make a FF5-like spc from your MML using FinalFantasy5 rom.
 The hexadecimal control code sequence of the FF5 sound driver can be described on a text basis.  
 <br>
+※warning  
+The generated SPC contains the FF5 sound driver and waveform data. Do not distribute SPC data.  
+<br>
 <a href=http://gnilda.rosx.net/SPC/F5/command.html>FinalFantasyV sound control code</a>.  
 <br>
 See <a href=usage.md>usage.md</a> for MML commands.  
