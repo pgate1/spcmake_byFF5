@@ -1,2 +1,2 @@
 # spcmake_byFF5
-make a FFV-like spc from your mml using FinalFantasy5 rom.
+make a FF-like spc from your mml using FinalFantasy5 rom.
