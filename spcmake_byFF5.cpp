@@ -508,7 +508,7 @@ int formatter(string &str, SPC &spc)
 			int sp = p + 1;
 			int ep = term_end(str, sp);
 			int d = atoi(str.substr(sp, ep-sp).c_str());
-			sprintf(buf, "%02X", d);
+			sprintf(buf, "%02X", (uint8)d);
 			str.replace(p, ep-sp+1, buf);
 			p--;
 			continue;
