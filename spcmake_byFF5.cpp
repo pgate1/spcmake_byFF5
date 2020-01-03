@@ -334,7 +334,13 @@ int formatter(string &str, SPC &spc)
 					}
 				}
 				// 常駐波形じゃなければBRRを追加する
-				if(!f_stayinst) spc.brr_map[brr_id].brr_fname = brr_fname;
+				if(!f_stayinst){
+					if(brr_id>=32){
+						printf("Error line %d : BRRは32個までです.\n", line);
+						return -1;
+					}
+					spc.brr_map[brr_id].brr_fname = brr_fname;
+				}
 				tone_map[tone_num].brr_fname = brr_fname;
 
 				// パラメータ取得、#toneは一行で記述すること
@@ -1084,7 +1090,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 		uint32 loop_adrs = start_adrs + (uint32)(*(uint16*)brr_data);
 //printf("%d %s start 0x%X end 0x%X\n", 0x20+i, brr_fname.c_str(), start_adrs, start_adrs+brr_size-2-1);
 		if(start_adrs+brr_size-2-1 >= 0x10000){
-			printf("BRR end address %X\n", start_adrs+brr_size-2-1);
+			printf("BRR end address 0x%X\n", start_adrs+brr_size-2-1);
 			printf("Error : %s BRRエリアが0x10000を超えました.\n", brr_fname.c_str());
 			delete[] brr_data;
 			delete[] ram;
