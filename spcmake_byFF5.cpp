@@ -441,9 +441,7 @@ int formatter(string &str, SPC &spc)
 					if(sp==string::npos) break;
 					//printf("macro_val_line %d\n", line);
 					ep = sp + macro_key.length();
-					if((str[sp-1]==' ' || str[sp-1]=='\t' || str[sp-1]=='\n' || str[sp-1]=='[')
-						&& (str[ep]==' ' || str[ep]=='\t' || str[ep]=='\r' || str[ep]=='\n' || str[ep]==']')
-					){
+					if((!isalnum(str[sp-1])) && (!isalnum(str[ep]))){
 						str.replace(sp, ep-sp, macro_val);
 					}
 					lp = sp + macro_val.length();
