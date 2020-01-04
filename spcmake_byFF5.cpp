@@ -430,7 +430,7 @@ int formatter(string &str, SPC &spc)
 				string macro_key = str.substr(sp, ep-sp);
 				sp = str.find('"', ep) + 1;
 				ep = str.find('"', sp);
-				string macro_val = " " + str.substr(sp, ep-sp) + " ";
+				string macro_val = str.substr(sp, ep-sp);
 				//printf("macro [%s][%s]\n", macro_key.c_str(), macro_val.c_str());
 				str.erase(p, ep-p+1);
 				p--;
