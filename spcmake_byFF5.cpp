@@ -130,8 +130,7 @@ int formatter(string &str, SPC &spc)
 	for(;;){
 		sp = str.find("/*", sp);
 		if(sp==string::npos) break;
-		int ep;
-		ep = str.find("*/", sp+2);
+		int ep = str.find("*/", sp+2);
 		if(ep==string::npos) break;
 		int k = 0;
 		int p;
@@ -143,8 +142,7 @@ int formatter(string &str, SPC &spc)
 	for(;;){
 		sp = str.find("//", sp);
 		if(sp==string::npos) break;
-		int ep;
-		ep = str.find('\n', sp+2);
+		int ep = str.find('\n', sp+2);
 		if(ep==string::npos) break;
 		str.erase(sp, ep-sp);
 	}
@@ -164,8 +162,7 @@ int formatter(string &str, SPC &spc)
 		if(str[p]=='#'){
 			// 曲名の取得
 			if(str.substr(p, 9)=="#songname"){
-				int sp = str.find('"', p);
-				sp++;
+				int sp = str.find('"', p+9) + 1;
 				int ep = str.find('"', sp);
 				spc.songname = str.substr(sp, ep-sp);
 				if(spc.songname.length()>32){
@@ -178,8 +175,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// ゲーム名の取得
 			if(str.substr(p, 10)=="#gametitle"){
-				int sp = str.find('"', p);
-				sp++;
+				int sp = str.find('"', p+10) + 1;
 				int ep = str.find('"', sp);
 				spc.gametitle = str.substr(sp, ep-sp);
 				if(spc.gametitle.length()>32){
@@ -192,8 +188,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// 作曲者の取得
 			if(str.substr(p, 7)=="#artist"){
-				int sp = str.find('"', p);
-				sp++;
+				int sp = str.find('"', p+7) + 1;
 				int ep = str.find('"', sp);
 				spc.artist = str.substr(sp, ep-sp);
 				if(spc.artist.length()>32){
@@ -206,8 +201,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// 作成者の取得
 			if(str.substr(p, 7)=="#dumper"){
-				int sp = str.find('"', p);
-				sp++;
+				int sp = str.find('"', p+7) + 1;
 				int ep = str.find('"', sp);
 				spc.dumper = str.substr(sp, ep-sp);
 				if(spc.dumper.length()>16){
@@ -220,8 +214,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// コメントの取得
 			if(str.substr(p, 8)=="#comment"){
-				int sp = str.find('"', p);
-				sp++;
+				int sp = str.find('"', p+8) + 1;
 				int ep = str.find('"', sp);
 				spc.comment = str.substr(sp, ep-sp);
 				if(spc.comment.length()>32){
@@ -234,8 +227,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// 再生時間とフェードアウト時間の設定
 			if(str.substr(p, 7)=="#length"){
-				int sp = p + 7;
-				sp = skip_space(str, sp);
+				int sp = skip_space(str, p+7);
 				int ep = term_end(str, sp);
 				string sec_str = str.substr(sp, ep-sp);
 				int cp;
@@ -258,8 +250,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// BRRオフセット
 			if(str.substr(p, 11)=="#brr_offset"){
-				int sp = p + 11;
-				sp = skip_space(str, sp);
+				int sp = skip_space(str, p+11);
 				int ep = term_end(str, sp);
 				if(str.substr(sp, ep-sp)=="auto"){
 					spc.brr_offset = 0xFFFF;
@@ -295,8 +286,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// 波形宣言
 			if(str.substr(p, 5)=="#tone"){
-				int sp = p + 5;
-				sp = skip_space(str, sp); // 数字の先頭
+				int sp = skip_space(str, p+5); // 数字の先頭
 				int ep = term_end(str, sp);
 				int tone_num = atoi(str.substr(sp, ep-sp).c_str());
 				if(tone_map.find(tone_num)!=tone_map.end()){
@@ -420,8 +410,7 @@ int formatter(string &str, SPC &spc)
 			}
 			// トラック番号の取得
 			if(str.substr(p, 6)=="#track"){
-				int sp = p + 6;
-				sp = skip_space(str, sp);
+				int sp = skip_space(str, p+6);
 				int ep = term_end(str, sp);
 				int track_num = atoi(str.substr(sp, ep-sp).c_str());
 				if(!(track_num>=1 && track_num<=8)){
@@ -431,6 +420,34 @@ int formatter(string &str, SPC &spc)
 				sprintf(buf, "#%d", track_num);
 				str.replace(p, ep-p, buf);
 				p++;
+				continue;
+			}
+			// マクロ定義
+			if(str.substr(p, 6)=="#macro"){
+				// マクロ定義
+				int sp = skip_space(str, p+6);
+				int ep = term_end(str, sp);
+				string macro_key = str.substr(sp, ep-sp);
+				sp = str.find('"', ep) + 1;
+				ep = str.find('"', sp);
+				string macro_val = " " + str.substr(sp, ep-sp) + " ";
+				//printf("macro [%s][%s]\n", macro_key.c_str(), macro_val.c_str());
+				str.erase(p, ep-p+1);
+				p--;
+				// マクロ置換
+				int lp = p;
+				for(;;){
+					sp = str.find(macro_key, lp);
+					if(sp==string::npos) break;
+					//printf("macro_val_line %d\n", line);
+					ep = sp + macro_key.length();
+					if((str[sp-1]==' ' || str[sp-1]=='\t' || str[sp-1]=='\n' || str[sp-1]=='[')
+						&& (str[ep]==' ' || str[ep]=='\t' || str[ep]=='\r' || str[ep]=='\n' || str[ep]==']')
+					){
+						str.replace(sp, ep-sp, macro_val);
+					}
+					lp = sp + macro_val.length();
+				}
 				continue;
 			}
 
@@ -474,8 +491,7 @@ int formatter(string &str, SPC &spc)
 		}
 		// ループの処理
 		if(str[p]==']'){ // ループの後ろ
-			int sp = p + 1;
-			sp = skip_space(str, sp);
+			int sp = skip_space(str, p+1);
 			int ep = term_end(str, sp);
 			int loop_count = atoi(str.substr(sp, ep-sp).c_str());
 			str.replace(p, ep-p, "F1 ");
@@ -1168,6 +1184,8 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
+	printf("spcmake_byFF5 ver.20200104\n");
+
 #ifdef _DEBUG
 	argc = 3;
 	argv[1] = "sample.txt";
@@ -1175,8 +1193,8 @@ int main(int argc, char *argv[])
 #endif
 
 	if(argc!=3){
-		printf("引数エラー.\n");
-		printf("spcmake_byff5.exe input.txt output.spc\n");
+		printf("useage : spcmake_byff5.exe input.txt output.spc\n");
+		getchar();
 		return -1;
 	}
 
