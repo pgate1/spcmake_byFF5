@@ -147,7 +147,7 @@ int formatter(string &str, SPC &spc)
 		str.erase(sp, ep-sp);
 	}
 	
-//FILE *fp=fopen("sample_out.txt","w");fprintf(fp,str.c_str());fclose(fp);
+//{FILE *fp=fopen("sample_debug.txt","w");fprintf(fp,str.c_str());fclose(fp);}
 
 	char buf[1024];
 	map<int, TONE> tone_map;
@@ -514,7 +514,7 @@ int formatter(string &str, SPC &spc)
 			// "[" → "F0 02 "
 			sprintf(buf, "F0 %02X ", (uint8)(loop_count-1));
 			str.replace(lp, 1, buf);
-			p += (6-1) + (jump_dest-1) -1;
+			p += (6-1) + (jump_dest-1);
 			continue;
 		}
 		// 10進数から16進数に変換
@@ -865,26 +865,26 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	// SPC700
 	header[0x25] = 0x37; // PCL
 	header[0x26] = 0x0E; // PCH
-	header[0x27] = 0x00; // A
-	header[0x28] = 0x00; // X
-	header[0x29] = 0x00; // Y
-	header[0x2A] = 0x00; // PSW
+//	header[0x27] = 0x00; // A
+//	header[0x28] = 0x00; // X
+//	header[0x29] = 0x00; // Y
+//	header[0x2A] = 0x00; // PSW
 	header[0x2B] = 0xFD; // SP
 
 	{
 	// バイナリフォーマット
 	int i;
 	for(i=0; i<32 && i<spc.songname.length(); i++) header[0x2E+i] = spc.songname[i];
-	for(; i<32; i++) header[0x2E+i] = 0x00;
+//	for(; i<32; i++) header[0x2E+i] = 0x00;
 
 	for(i=0; i<32 && i<spc.gametitle.length(); i++) header[0x4E+i] = spc.gametitle[i];
-	for(; i<32; i++) header[0x4E+i] = 0x00;
+//	for(; i<32; i++) header[0x4E+i] = 0x00;
 
 	for(i=0; i<32 && i<spc.artist.length(); i++) header[0xB0+i] = spc.artist[i];
-	for(; i<32; i++) header[0xB0+i] = 0x00;
+//	for(; i<32; i++) header[0xB0+i] = 0x00;
 
 	for(i=0; i<16 && i<spc.dumper.length(); i++) header[0x6E+i] = spc.dumper[i];
-	for(; i<16; i++) header[0x6E+i] = 0x00;
+//	for(; i<16; i++) header[0x6E+i] = 0x00;
 
 	if(spc.comment.length()){
 		for(i=0; i<32 && i<spc.comment.length(); i++) header[0x7E+i] = spc.comment[i];
@@ -892,7 +892,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	else{
 		header[0x7E] = ' '; i = 1;
 	}
-	for(; i<32; i++) header[0x7E+i] = 0x00;
+//	for(; i<32; i++) header[0x7E+i] = 0x00;
 	}
 
 	// SPC作成年月日(16進)
@@ -1065,70 +1065,81 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 
 	// BRR埋め込み
 //	memset(ram+0x1B80, 0x00, 128); // 使わないポインタは0x0000埋め
+	// 20200105 すでに埋め込んだBRRは使いまわす
+	map<string, pair<uint16, uint16> > brr_put_map;
 	uint16 brr_offset = spc.brr_offset + 0x010E;
 	uint32 adrs_index = 0;
 	for(i=0; i<spc.brr_map.size(); i++){
 		string brr_fname = spc.brr_map[i].brr_fname;
 	//	if(brr_fname[0]=='\0') continue;
+		uint32 start_adrs, loop_adrs;
+		if(brr_put_map.find(brr_fname)==brr_put_map.end()){ // 置いてないbrrなら
 
-		int brr_size;
-		uint8 *brr_data;
-		if(brr_fname.substr(0, 8)=="FF5inst:"){ // FF5の波形
-		//	if(brr_fname[8]=='s') continue; // 常駐波形は飛ばす
-			int sp = 8;
-			int ep = term_end(brr_fname, sp);
-			int inst_id = atoi(brr_fname.substr(sp, ep-sp).c_str());
-			brr_size = asd.brr_size[inst_id] + 2; // 先頭2バイトループ追加
-			brr_data = new uint8[brr_size];
-			memcpy(brr_data+2, asd.brr[inst_id], asd.brr_size[inst_id]);
-			*(uint16*)brr_data = asd.brr_loop[inst_id];
-		//	printf("loop 0x%04X\n",asd.brr_loop[inst_id]);
-		}
-		else{ // BRRファイル指定
-			FILE *brrfp = fopen(brr_fname.c_str(), "rb");
-			if(brrfp==NULL){
-				printf("Error : BRRファイル %s を開けません.\n", brr_fname.c_str());
+			int brr_size;
+			uint8 *brr_data;
+			if(brr_fname.substr(0, 8)=="FF5inst:"){ // FF5の波形
+			//	if(brr_fname[8]=='s') continue; // 常駐波形は飛ばす
+				int sp = 8;
+				int ep = term_end(brr_fname, sp);
+				int inst_id = atoi(brr_fname.substr(sp, ep-sp).c_str());
+				brr_size = asd.brr_size[inst_id] + 2; // 先頭2バイトループ追加
+				brr_data = new uint8[brr_size];
+				memcpy(brr_data+2, asd.brr[inst_id], asd.brr_size[inst_id]);
+				*(uint16*)brr_data = asd.brr_loop[inst_id];
+			//	printf("loop 0x%04X\n",asd.brr_loop[inst_id]);
+			}
+			else{ // BRRファイル指定
+				FILE *brrfp = fopen(brr_fname.c_str(), "rb");
+				if(brrfp==NULL){
+					printf("Error : BRRファイル %s を開けません.\n", brr_fname.c_str());
+					delete[] ram;
+					return -1;
+				}
+				struct stat statBuf;
+				if(stat(brr_fname.c_str(), &statBuf)==0) brr_size = statBuf.st_size;
+			//	printf("brr_size %d\n", brr_size);
+				brr_data = new uint8[brr_size];
+				fread(brr_data, 1, brr_size, brrfp);
+				fclose(brrfp);
+			}
+
+			// 本家は0x3000は効果音シーケンスで0x4800からBRR
+			start_adrs = (uint32)brr_offset + adrs_index;
+			loop_adrs = start_adrs + (uint32)(*(uint16*)brr_data);
+//printf("%d %s start 0x%X end 0x%X\n", 0x20+i, brr_fname.c_str(), start_adrs, start_adrs+brr_size-2-1);
+			if(start_adrs+brr_size-2-1 >= 0x10000){
+				printf("BRR end address 0x%X\n", start_adrs+brr_size-2-1);
+				printf("Error : %s BRRエリアが0x10000を超えました.\n", brr_fname.c_str());
+				delete[] brr_data;
 				delete[] ram;
 				return -1;
 			}
-			struct stat statBuf;
-			if(stat(brr_fname.c_str(), &statBuf)==0) brr_size = statBuf.st_size;
-		//	printf("brr_size %d\n", brr_size);
-			brr_data = new uint8[brr_size];
-			fread(brr_data, 1, brr_size, brrfp);
-			fclose(brrfp);
-		}
-
-		// 本家は0x3000は効果音シーケンスで0x4800からBRR
-		uint32 start_adrs = (uint32)brr_offset + adrs_index;
-		uint32 loop_adrs = start_adrs + (uint32)(*(uint16*)brr_data);
-//printf("%d %s start 0x%X end 0x%X\n", 0x20+i, brr_fname.c_str(), start_adrs, start_adrs+brr_size-2-1);
-		if(start_adrs+brr_size-2-1 >= 0x10000){
-			printf("BRR end address 0x%X\n", start_adrs+brr_size-2-1);
-			printf("Error : %s BRRエリアが0x10000を超えました.\n", brr_fname.c_str());
+			memcpy(ram+start_adrs, brr_data+2, brr_size-2);
 			delete[] brr_data;
-			delete[] ram;
-			return -1;
-		}
-		memcpy(ram+start_adrs, brr_data+2, brr_size-2);
-		delete[] brr_data;
 
-		if(start_adrs >= 0x10000){
-			printf("BRR start address 0x%X\n", start_adrs);
-			printf("Error : %s BRRスタートアドレスが0x10000を超えました.\n", brr_fname.c_str());
-			delete[] ram;
-			return -1;
+			if(start_adrs >= 0x10000){
+				printf("BRR start address 0x%X\n", start_adrs);
+				printf("Error : %s BRRスタートアドレスが0x10000を超えました.\n", brr_fname.c_str());
+				delete[] ram;
+				return -1;
+			}
+			if(loop_adrs >= 0x10000){
+				printf("BRR loop address 0x%X\n", loop_adrs);
+				printf("Error : %s BRRループアドレスが0x10000を超えました.\n", brr_fname.c_str());
+				delete[] ram;
+				return -1;
+			}
+
+			brr_put_map[brr_fname] = make_pair<uint16, uint16>(start_adrs, loop_adrs);
+			adrs_index += brr_size -2;
 		}
-		if(loop_adrs >= 0x10000){
-			printf("BRR loop address 0x%X\n", loop_adrs);
-			printf("Error : %s BRRループアドレスが0x10000を超えました.\n", brr_fname.c_str());
-			delete[] ram;
-			return -1;
+		else{ // すでに配置したbrrならアドレスを流用するだけ
+			start_adrs = brr_put_map[brr_fname].first;
+			loop_adrs = brr_put_map[brr_fname].second;
 		}
+
 		*(uint16*)(ram+0x1B80+i*4) = (uint16)start_adrs;
 		*(uint16*)(ram+0x1B82+i*4) = (uint16)loop_adrs;
-
-		adrs_index += brr_size -2;
 	}
 	uint32 brr_adrs_end = (uint32)brr_offset + adrs_index -1;
 	printf("BRR end address 0x%04X\n", brr_adrs_end); //getchar();
@@ -1182,7 +1193,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("spcmake_byFF5 ver.20200104\n");
+	printf("spcmake_byFF5 ver.20200105\n");
 
 #ifdef _DEBUG
 	argc = 3;
@@ -1237,6 +1248,8 @@ int main(int argc, char *argv[])
 	if(make_spc(spc, asd, argv[2])){
 		return -1;
 	}
+
+//	getchar();
 
 	return 0;
 }
