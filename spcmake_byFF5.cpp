@@ -1223,7 +1223,7 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("spcmake_byFF5 ver.20200105\n");
+	printf("spcmake_byFF5 ver.20200106\n");
 
 #ifdef _DEBUG
 	argc = 3;
