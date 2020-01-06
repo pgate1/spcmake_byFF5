@@ -11,5 +11,6 @@ if %ERRORLEVEL%==0 (
    start sample.spc
    exit
 ) else (
+   echo.
    pause
 )

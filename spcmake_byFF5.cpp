@@ -49,6 +49,7 @@ public:
 
 	uint16 brr_offset;
 	bool f_brr_echo_overcheck;
+	uint16 echo_depth;
 	bool f_surround; // 逆位相サラウンド
 
 	SPC()
@@ -64,6 +65,7 @@ public:
 		// 0x2C00 or 0x3000 or 0x4800からBRR, 最初の0x10E(0x10Dまで)は常駐波形BRR
 		brr_offset = 0x4800;
 		f_brr_echo_overcheck = false;
+		echo_depth = 5;
 		f_surround = false;
 	}
 	~SPC()
@@ -272,6 +274,25 @@ int formatter(string &str, SPC &spc)
 			if(str.substr(p, 19)=="#brr_echo_overcheck"){
 				spc.f_brr_echo_overcheck = true;
 				int ep = term_end(str, p);
+				str.erase(p, ep-p);
+				p--;
+				continue;
+			}
+			// エコー深さ指定
+			if(str.substr(p, 11)=="#echo_depth"){
+				int sp = skip_space(str, p+11);
+				if(str[sp]=='#'){
+					printf("Error : #echo_depth パラメータを指定してください.\n");
+					return -1;
+				}
+				int ep = term_end(str, sp);
+				// EDL default 5
+				int echo_depth = atoi(str.substr(sp, ep-sp).c_str());
+				if(echo_depth<=0 || echo_depth>=16){
+					printf("Error line %d : #echo_depth は 1～15 としてください.\n", line);
+					return -1;
+				}
+				spc.echo_depth = echo_depth;
 				str.erase(p, ep-p);
 				p--;
 				continue;
@@ -686,8 +707,8 @@ public:
 	uint8 *driver;
 
 	// 効果音シーケンス
-//	uint32 eseq_size;
-//	uint8 *eseq;
+	uint32 eseq_size;
+	uint8 *eseq;
 
 	// 常駐波形
 	uint32 sbrr_size;
@@ -706,7 +727,7 @@ public:
 	AkaoSoundDriver()
 	{
 		driver = NULL;
-//		eseq = NULL;
+		eseq = NULL;
 		sbrr = NULL;
 		int i;
 		for(i=0; i<35; i++){
@@ -716,7 +737,7 @@ public:
 	~AkaoSoundDriver()
 	{
 		if(driver!=NULL) delete[] driver;
-//		if(eseq!=NULL) delete[] eseq;
+		if(eseq!=NULL) delete[] eseq;
 		if(sbrr!=NULL) delete[] sbrr;
 		int i;
 		for(i=0; i<35; i++){
@@ -786,26 +807,42 @@ int get_akao(const char *fname, AkaoSoundDriver &asd)
 	// 0x041F95 - 0x043B96 -> 0x2C00 - 0x47FF
 	// 0x2C00～効果音シーケンスアドレス
 	// 0x3000～効果音シーケンス
-	// 0x4800～常駐波形BRR
-//	asd.eseq_size = *(uint16*)(rom+0x41F95);
-//	asd.eseq = new uint8[asd.eseq_size];
-//	memcpy(asd.eseq, rom+0x041F95+2, asd.eseq_size);
-//FILE *fp=fopen("out.bin","wb");fwrite(effect_seq,1,size,fp);fclose(fp);
+	asd.eseq_size = *(uint16*)(rom+0x41F95);
+	asd.eseq = new uint8[asd.eseq_size];
+	memcpy(asd.eseq, rom+0x041F95+2, asd.eseq_size);
+	asd.eseq[339*2] = 0xBB;
+//uint8 buf[0x2C00];memset(buf,0x00,0x2C00);
+//FILE *fp=fopen("out.bin","wb");fwrite(buf,1,0x2C00,fp);fwrite(effect_seq,1,size,fp);fclose(fp);
 /*
 {
 system("mkdir effect");
-char fname[100];
+int pass = 0;
 int i;
-for(i=0; i<4*44+1; i++){
-	sprintf(fname, "effect/ff5_e%02X.txt", i);
-	FILE *fp = fopen(fname, "w");
-	uint32 adrs = *(uint16*)(asd.eseq+i*4) - 0x3000;
-	for(int j=adrs; j<adrs+0x40; j++){
-		fprintf(fp, "%02X ", asd.eseq[0x400+j]);
-		if((j%16)==0) fprintf(fp,"\n");
+for(i=0; i<8*44+2; i++){ // 354
+	uint16 adrs = *(uint16*)(asd.eseq+i*2);
+	if(adrs==0x0000){
+		pass++;
+		continue;
 	}
+//	if(adrs==0x46BA) adrs++;
+	char fname[30];
+	sprintf(fname, "effect/ff5e_%03d.txt", i);
+	FILE *fp = fopen(fname, "w");
+	adrs -= 0x2C00;
+	int j;
+	for(j=adrs; ; j++){
+		fprintf(fp, "%02X ", asd.eseq[j]);
+		if(asd.eseq[j]==0xF2) break;
+	}
+	j++;
 	fclose(fp);
+	uint16 next_adrs = *(uint16*)(asd.eseq+(i+1)*2);
+	if(next_adrs!=0x0000 && (j+0x2C00)<next_adrs){
+		printf("err %d 0x%04X 0x%04X\n", i, j+0x2C00, next_adrs);
+		getchar();
+	}
 }
+printf("pass %d\n", pass);getchar();
 }
 */
 	// 音源BRRの取得
@@ -875,24 +912,15 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	// バイナリフォーマット
 	int i;
 	for(i=0; i<32 && i<spc.songname.length(); i++) header[0x2E+i] = spc.songname[i];
-//	for(; i<32; i++) header[0x2E+i] = 0x00;
-
 	for(i=0; i<32 && i<spc.gametitle.length(); i++) header[0x4E+i] = spc.gametitle[i];
-//	for(; i<32; i++) header[0x4E+i] = 0x00;
-
 	for(i=0; i<32 && i<spc.artist.length(); i++) header[0xB0+i] = spc.artist[i];
-//	for(; i<32; i++) header[0xB0+i] = 0x00;
-
 	for(i=0; i<16 && i<spc.dumper.length(); i++) header[0x6E+i] = spc.dumper[i];
-//	for(; i<16; i++) header[0x6E+i] = 0x00;
-
 	if(spc.comment.length()){
 		for(i=0; i<32 && i<spc.comment.length(); i++) header[0x7E+i] = spc.comment[i];
 	}
 	else{
 		header[0x7E] = ' '; i = 1;
 	}
-//	for(; i<32; i++) header[0x7E+i] = 0x00;
 	}
 
 	// SPC作成年月日(16進)
@@ -931,8 +959,13 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	dsp_reg[0x0C] = 0x7F; // MVOL_L
 	dsp_reg[0x1C] = spc.f_surround ? 0x80 : 0x7F; // MVOL_R
 	dsp_reg[0x5D] = 0x1B; // DIR
-	dsp_reg[0x6D] = 0xD2; // ESA
-	dsp_reg[0x7D] = 0x05; // EDL
+//	dsp_reg[0x6D] = 0xD2; // ESA
+//	dsp_reg[0x7D] = 0x05; // EDL
+
+	// エコーバッファ領域設定
+	uint16 echobuf_start_adrs = 0xFA00 - (spc.echo_depth << 11);
+	dsp_reg[0x6D] = echobuf_start_adrs >> 8; // ESA
+	dsp_reg[0x7D] = spc.echo_depth; // EDL
 
 
 	// ベースアドレス
@@ -1064,7 +1097,6 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	memcpy(ram+0x1B00, asd.sbrr_start, 32);
 
 	// BRR埋め込み
-//	memset(ram+0x1B80, 0x00, 128); // 使わないポインタは0x0000埋め
 	// 20200105 すでに埋め込んだBRRは使いまわす
 	map<string, pair<uint16, uint16> > brr_put_map;
 	uint16 brr_offset = spc.brr_offset + 0x010E;
@@ -1107,9 +1139,9 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 			start_adrs = (uint32)brr_offset + adrs_index;
 			loop_adrs = start_adrs + (uint32)(*(uint16*)brr_data);
 //printf("%d %s start 0x%X end 0x%X\n", 0x20+i, brr_fname.c_str(), start_adrs, start_adrs+brr_size-2-1);
-			if(start_adrs+brr_size-2-1 >= 0x10000){
+			if(start_adrs+brr_size-2-1 >= 0x0FA00){
 				printf("BRR end address 0x%X\n", start_adrs+brr_size-2-1);
-				printf("Error : %s BRRエリアが0x10000を超えました.\n", brr_fname.c_str());
+				printf("Error : %s BRRエリアが0xFA00を超えました.\n", brr_fname.c_str());
 				delete[] brr_data;
 				delete[] ram;
 				return -1;
@@ -1117,15 +1149,15 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 			memcpy(ram+start_adrs, brr_data+2, brr_size-2);
 			delete[] brr_data;
 
-			if(start_adrs >= 0x10000){
+			if(start_adrs >= 0x0FA00){
 				printf("BRR start address 0x%X\n", start_adrs);
-				printf("Error : %s BRRスタートアドレスが0x10000を超えました.\n", brr_fname.c_str());
+				printf("Error : %s BRRスタートアドレスが0xFA00を超えました.\n", brr_fname.c_str());
 				delete[] ram;
 				return -1;
 			}
-			if(loop_adrs >= 0x10000){
+			if(loop_adrs >= 0x0FA00){
 				printf("BRR loop address 0x%X\n", loop_adrs);
-				printf("Error : %s BRRループアドレスが0x10000を超えました.\n", brr_fname.c_str());
+				printf("Error : %s BRRループアドレスが0xFA00を超えました.\n", brr_fname.c_str());
 				delete[] ram;
 				return -1;
 			}
@@ -1143,16 +1175,15 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	}
 	uint32 brr_adrs_end = (uint32)brr_offset + adrs_index -1;
 	printf("BRR end address 0x%04X\n", brr_adrs_end); //getchar();
+	// エコーバッファのスタートアドレスを求める
+	printf("EchoBuf start   0x%04X\n", echobuf_start_adrs);//getchar();
 	if(spc.f_brr_echo_overcheck){
-		if(brr_adrs_end >= 0x0D200){
+		if((uint16)brr_adrs_end >= echobuf_start_adrs){
 			printf("Error : BRRデータがエコーバッファ領域と重なっています.\n");
 			delete[] ram;
 			return -1;
 		}
 	}
-
-	// BRRの次からエコーバッファ前までクリア
-//	for(i=(uint32)brr_offset+adrs_index; i<0xD200; i++) ram[i] = 0x00;
 
 
 	// SPC出力
