@@ -22,7 +22,7 @@ struct TONE {
 	int brr_id; // formatter only
 	int inst_id; // 常駐波形 only
 	uint8 octave; // formatter only
-	uint8 transpose; // formatter only
+	signed char transpose; // formatter only
 	signed char detune; // formatter only
 	uint8 adsr1, adsr2;
 };
@@ -496,7 +496,7 @@ int formatter(string &str, SPC &spc)
 			}
 			else{
 				sprintf(buf_octave, "E4 %02X", tone_map[tone_num].octave);
-				sprintf(buf_transpose, "E7 %02X", tone_map[tone_num].transpose);
+				sprintf(buf_transpose, "E7 %02X", (uint8)tone_map[tone_num].transpose);
 				sprintf(buf_detune, "E9 %02X", (uint8)tone_map[tone_num].detune);
 			}
 			sprintf(buf, "EA %02X %s %s %s ",
@@ -1175,7 +1175,6 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	}
 	uint32 brr_adrs_end = (uint32)brr_offset + adrs_index -1;
 	printf("BRR end address 0x%04X\n", brr_adrs_end); //getchar();
-	// エコーバッファのスタートアドレスを求める
 	printf("EchoBuf start   0x%04X\n", echobuf_start_adrs);//getchar();
 	if(spc.f_brr_echo_overcheck){
 		if((uint16)brr_adrs_end >= echobuf_start_adrs){
