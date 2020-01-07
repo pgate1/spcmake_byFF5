@@ -133,6 +133,7 @@ int get_akao(const char *fname, AkaoSoundDriver &asd)
 /*
 {
 system("mkdir effect");
+FILE *efp = fopen("effect/effall.txt", "w");
 int pass = 0;
 int i;
 for(i=0; i<8*44+2; i++){ // 354
@@ -143,6 +144,7 @@ for(i=0; i<8*44+2; i++){ // 354
 	}
 //	if(adrs==0x46BA) adrs++;
 	printf("%d 0x%04X\n", i, adrs);
+	fprintf(efp, "@@%d ", i);
 	char fname[30];
 	sprintf(fname, "effect/ff5e_%03d.txt", i);
 	FILE *fp = fopen(fname, "w");
@@ -163,6 +165,7 @@ for(i=0; i<8*44+2; i++){ // 354
 		getchar();
 	}
 }
+fclose(efp);
 printf("pass %d\n", pass);getchar();
 }
 */
