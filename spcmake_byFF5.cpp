@@ -17,7 +17,7 @@ typedef unsigned char  uint8;
 typedef unsigned short uint16;
 typedef unsigned long  uint32;
 
-class AkaoSoundDriver
+class FF5_AkaoSoundDriver
 {
 public:
 	uint32 driver_size;
@@ -41,7 +41,7 @@ public:
 	uint16 brr_rate[35];
 	uint16 brr_adsr[35];
 
-	AkaoSoundDriver()
+	FF5_AkaoSoundDriver()
 	{
 		driver = NULL;
 		eseq = NULL;
@@ -51,7 +51,7 @@ public:
 			brr[i] = NULL;
 		}
 	}
-	~AkaoSoundDriver()
+	~FF5_AkaoSoundDriver()
 	{
 		if(driver!=NULL) delete[] driver;
 		if(eseq!=NULL) delete[] eseq;
@@ -64,11 +64,18 @@ public:
 };
 
 // FinalFantasy5.romからAkaoサウンドドライバ等取得
-int get_akao(const char *fname, AkaoSoundDriver &asd)
+int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 {
 	FILE *fp = fopen(fname, "rb");
 	if(fp==NULL){
 		printf("cant open %s.\n", fname);
+		return -1;
+	}
+	struct stat statBuf;
+	int rom_size = 0;
+	if(stat(fname, &statBuf)==0) rom_size = statBuf.st_size;
+	if(rom_size!=2*1024*1024){
+		printf("FF5のromサイズが違う？ヘッダが付いてる？\n");
 		return -1;
 	}
 	uint8 *rom = new uint8[2*1024*1024];
@@ -318,7 +325,7 @@ int is_cmd(const char c)
 	return 0;
 }
 
-int formatter(string &str, AkaoSoundDriver &asd, SPC &spc)
+int formatter(string &str, FF5_AkaoSoundDriver &asd, SPC &spc)
 {
 	line = 1;
 
@@ -922,7 +929,7 @@ int get_sequence(string &str, SPC &spc)
 
 #include<time.h>
 
-int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
+int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 {
 	// SPC Header
 	uint8 header[0x100];
@@ -993,7 +1000,6 @@ int make_spc(SPC &spc, AkaoSoundDriver &asd, const char *spc_fname)
 	dsp_reg[0x5D] = 0x1B; // DIR
 //	dsp_reg[0x6D] = 0xD2; // ESA
 //	dsp_reg[0x7D] = 0x05; // EDL
-
 	// エコーバッファ領域設定
 	uint16 echobuf_start_adrs = 0xFA00 - (spc.echo_depth << 11);
 	dsp_reg[0x6D] = echobuf_start_adrs >> 8; // ESA
@@ -1269,6 +1275,12 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+	FF5_AkaoSoundDriver asd;
+
+	if(get_akao("FinalFantasy5.rom", asd)){
+		return -1;
+	}
+
 	string str;
 
 	// シーケンスファイル読み込み
@@ -1282,12 +1294,6 @@ int main(int argc, char *argv[])
 		str += buf;
 	}
 	fclose(fp);
-
-	AkaoSoundDriver asd;
-
-	if(get_akao("FinalFantasy5.rom", asd)){
-		return -1;
-	}
 
 	SPC spc;
 
