@@ -114,17 +114,17 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	// 先頭2バイトはサイズ
 	// 0x041F4F - 0x041F70 -> 0x1B00 - 0x1B1F
 	// 0x4800-0x48FCを指す
-	memcpy(asd.sbrr_start, rom+0x041F4F+2, 32);
+	memcpy(asd.sbrr_start, rom+0x41F4F+2, 32); // (2+2)byte x 8
 
 	// 常駐波形ADSR
 	// 先頭2バイトはサイズ
 	// 0x041F71 - 0x041F82 -> 0x1A80 - 0x1A8F
-	memcpy(asd.sbrr_adsr, rom+0x041F71+2, 16);
+	memcpy(asd.sbrr_adsr, rom+0x41F71+2, 16); // 2byte x 8
 
 	// 常駐波形レート
 	// 先頭2バイトはサイズ
 	// 0x041F83 - 0x041F94 -> 0x1A00 - 0x1A0F
-	memcpy(asd.sbrr_rate, rom+0x041F83+2, 16);
+	memcpy(asd.sbrr_rate, rom+0x41F83+2, 16); // 2byte x 8
 
 	// 効果音シーケンスと効果音BRR
 	// 先頭2バイトはサイズ
@@ -133,7 +133,7 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	// 0x3000～効果音シーケンス
 	uint16 eseq_size = *(uint16*)(rom+0x41F95);
 	asd.eseq = new uint8[eseq_size];
-	memcpy(asd.eseq, rom+0x041F95+2, eseq_size);
+	memcpy(asd.eseq, rom+0x41F95+2, eseq_size);
 	asd.eseq[339*2] = 0xBB; // 効果音339は幻？
 //uint8 buf[0x2C00];memset(buf,0x00,0x2C00);
 //FILE *fp=fopen("out.bin","wb");fwrite(buf,1,0x2C00,fp);fwrite(effect_seq,1,size,fp);fclose(fp);
@@ -179,18 +179,16 @@ printf("pass %d\n", pass);getchar();
 	// 音源BRRの取得
 	// 0x043C6F - 0x043CD7 -> 0x490E ～ 必要な場所まで
 	int i;
-	for(i=0; i<0x23; i++){
+	for(i=0; i<35; i++){
 		// 先頭2バイトはサイズ
-		int brr_adrs = *(int*)(rom+0x043C6F+i*3) & 0x001FFFFF;
+		int brr_adrs = *(uint32*)(rom+0x43C6F+i*3) & 0x001FFFFF;
 		asd.brr_size[i] = *(uint16*)(rom+brr_adrs);
 		asd.brr[i] = new uint8[asd.brr_size[i]];
 		memcpy(asd.brr[i], rom+brr_adrs+2, asd.brr_size[i]);
 	}
 	// 音源ループの取得
 	// 0x043CD8 - 0x043D1D
-	for(i=0; i<0x23; i++){
-		asd.brr_loop[i] = *(uint16*)(rom+0x043CD8+i*2);
-	}
+	memcpy(asd.brr_loop, rom+0x43CD8, 70); // 2byte x 35
 /*
 system("mkdir brr");
 char fname[100];
@@ -203,16 +201,12 @@ for(i=0; i<0x23; i++){
 }
 */
 	// 音源レートの取得
-	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F 2byte x 32
-	for(i=0; i<0x23; i++){
-		asd.brr_rate[i] = *(uint16*)(rom+0x043D1E+i*2);
-	}
+	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F
+	memcpy(asd.brr_rate, rom+0x43D1E, 70); // 2byte x 35
 
 	// 音源ADSRの取得
-	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF 2byte x 32
-	for(i=0; i<0x23; i++){
-		asd.brr_adsr[i] = *(uint16*)(rom+0x043D64+i*2);
-	}
+	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF
+	memcpy(asd.brr_adsr, rom+0x43D64, 70); // 2byte x 35
 
 	delete[] rom;
 
