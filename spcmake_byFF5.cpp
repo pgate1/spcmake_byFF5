@@ -94,6 +94,7 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 		return -1;
 	}
 
+
 	// サウンドドライバの取得
 	// 先頭2バイトはサイズ
 	// 0x04064D - 0x041E3E -> 0x0200 - 0x19EF
@@ -101,6 +102,7 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	asd.driver = new uint8[asd.driver_size];
 	memcpy(asd.driver, rom+0x4064D+2, asd.driver_size);
 //FILE *fp=fopen("out.bin","wb");fwrite(audio.driver,1,audio.driver_size,fp);fclose(fp);
+
 
 	// 常駐波形BRRの取得
 	// 先頭2バイトはサイズ
@@ -121,10 +123,44 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	// 0x041F71 - 0x041F82 -> 0x1A80 - 0x1A8F
 	memcpy(asd.sbrr_adsr, rom+0x41F71+2, 16); // 2byte x 8
 
-	// 常駐波形レート
+	// 常駐波形音程補正
 	// 先頭2バイトはサイズ
 	// 0x041F83 - 0x041F94 -> 0x1A00 - 0x1A0F
 	memcpy(asd.sbrr_tune, rom+0x41F83+2, 16); // 2byte x 8
+
+
+	// 音源BRRの取得
+	// 0x043C6F - 0x043CD7 -> 0x490E ～ 必要な場所まで
+	int i;
+	for(i=0; i<35; i++){
+		// 先頭2バイトはサイズ
+		int brr_adrs = *(uint32*)(rom+0x43C6F+i*3) & 0x001FFFFF;
+		asd.brr_size[i] = *(uint16*)(rom+brr_adrs);
+		asd.brr[i] = new uint8[asd.brr_size[i]];
+		memcpy(asd.brr[i], rom+brr_adrs+2, asd.brr_size[i]);
+	}
+	// 音源ループの取得
+	// 0x043CD8 - 0x043D1D
+	memcpy(asd.brr_loop, rom+0x43CD8, 70); // 2byte x 35
+/*
+system("mkdir brr");
+char fname[100];
+for(i=0; i<0x23; i++){
+	sprintf(fname, "brr/ff5_%02X.brr", i+1);
+	FILE *fp = fopen(fname, "wb");
+	fwrite(&audio.brr_loop[i], 1, 2, fp);
+	fwrite(audio.brr[i], 1, audio.brr_size[i], fp);
+	fclose(fp);
+}
+*/
+	// 音源音程補正の取得
+	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F
+	memcpy(asd.brr_tune, rom+0x43D1E, 70); // 2byte x 35
+
+	// 音源ADSRの取得
+	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF
+	memcpy(asd.brr_adsr, rom+0x43D64, 70); // 2byte x 35
+
 
 	// 効果音シーケンスと効果音BRR
 	// 先頭2バイトはサイズ
@@ -176,37 +212,6 @@ fclose(efp);
 printf("pass %d\n", pass);getchar();
 }
 */
-	// 音源BRRの取得
-	// 0x043C6F - 0x043CD7 -> 0x490E ～ 必要な場所まで
-	int i;
-	for(i=0; i<35; i++){
-		// 先頭2バイトはサイズ
-		int brr_adrs = *(uint32*)(rom+0x43C6F+i*3) & 0x001FFFFF;
-		asd.brr_size[i] = *(uint16*)(rom+brr_adrs);
-		asd.brr[i] = new uint8[asd.brr_size[i]];
-		memcpy(asd.brr[i], rom+brr_adrs+2, asd.brr_size[i]);
-	}
-	// 音源ループの取得
-	// 0x043CD8 - 0x043D1D
-	memcpy(asd.brr_loop, rom+0x43CD8, 70); // 2byte x 35
-/*
-system("mkdir brr");
-char fname[100];
-for(i=0; i<0x23; i++){
-	sprintf(fname, "brr/ff5_%02X.brr", i+1);
-	FILE *fp = fopen(fname, "wb");
-	fwrite(&audio.brr_loop[i], 1, 2, fp);
-	fwrite(audio.brr[i], 1, audio.brr_size[i], fp);
-	fclose(fp);
-}
-*/
-	// 音源レートの取得
-	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F
-	memcpy(asd.brr_tune, rom+0x43D1E, 70); // 2byte x 35
-
-	// 音源ADSRの取得
-	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF
-	memcpy(asd.brr_adsr, rom+0x43D64, 70); // 2byte x 35
 
 	delete[] rom;
 
@@ -1009,12 +1014,12 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 
 	// 常駐波形ADSR
 	memcpy(ram+0x1A80, asd.sbrr_adsr, 16);
-	// 常駐波形レート
+	// 常駐波形音程補正
 	memcpy(ram+0x1A00, asd.sbrr_tune, 16);
 	// 効果音シーケンス等
 //	memcpy(ram+0x2C00, asd.eseq, asd.eseq_size); // 使用しない
 
-	// レート、ADSR埋め込み
+	// 音程補正、ADSR埋め込み
 	int i;
 	for(i=0; i<spc.brr_map.size(); i++){
 		if(spc.brr_map[i].brr_fname.substr(0, 8)=="FF5inst:"){
@@ -1026,7 +1031,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 			*(uint16*)(ram+0x1AC0+i*2) = asd.brr_adsr[inst_id];
 		}
 		else{ // 自作BRRでのADSR設定
-			*(uint16*)(ram+0x1A40+i*2) = 0x0000; // レートはどうしようか？
+			*(uint16*)(ram+0x1A40+i*2) = 0x0000; // 音程補正はどうしようか？
 			ram[0x1AC0+i*2] = spc.brr_map[i].adsr1;
 			ram[0x1AC0+i*2+1] = spc.brr_map[i].adsr2;
 		}
