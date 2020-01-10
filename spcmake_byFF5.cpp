@@ -31,14 +31,14 @@ public:
 	uint32 sbrr_size;
 	uint8 *sbrr;
 	uint16 sbrr_start[16]; // スタートアドレスとループアドレス
+	uint16 sbrr_tune[8];
 	uint16 sbrr_adsr[8];
-	uint16 sbrr_rate[8];
 
 	// 波形
 	uint32 brr_size[35];
 	uint8 *brr[35];
 	uint16 brr_loop[35];
-	uint16 brr_rate[35];
+	uint16 brr_tune[35];
 	uint16 brr_adsr[35];
 
 	FF5_AkaoSoundDriver()
@@ -124,7 +124,7 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	// 常駐波形レート
 	// 先頭2バイトはサイズ
 	// 0x041F83 - 0x041F94 -> 0x1A00 - 0x1A0F
-	memcpy(asd.sbrr_rate, rom+0x41F83+2, 16); // 2byte x 8
+	memcpy(asd.sbrr_tune, rom+0x41F83+2, 16); // 2byte x 8
 
 	// 効果音シーケンスと効果音BRR
 	// 先頭2バイトはサイズ
@@ -202,7 +202,7 @@ for(i=0; i<0x23; i++){
 */
 	// 音源レートの取得
 	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F
-	memcpy(asd.brr_rate, rom+0x43D1E, 70); // 2byte x 35
+	memcpy(asd.brr_tune, rom+0x43D1E, 70); // 2byte x 35
 
 	// 音源ADSRの取得
 	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF
@@ -1010,7 +1010,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 	// 常駐波形ADSR
 	memcpy(ram+0x1A80, asd.sbrr_adsr, 16);
 	// 常駐波形レート
-	memcpy(ram+0x1A00, asd.sbrr_rate, 16);
+	memcpy(ram+0x1A00, asd.sbrr_tune, 16);
 	// 効果音シーケンス等
 //	memcpy(ram+0x2C00, asd.eseq, asd.eseq_size); // 使用しない
 
@@ -1022,7 +1022,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 			int sp = 8;
 			int ep = term_end(spc.brr_map[i].brr_fname, sp);
 			int inst_id = atoi(spc.brr_map[i].brr_fname.substr(sp, ep-sp).c_str());
-			*(uint16*)(ram+0x1A40+i*2) = asd.brr_rate[inst_id];
+			*(uint16*)(ram+0x1A40+i*2) = asd.brr_tune[inst_id];
 			*(uint16*)(ram+0x1AC0+i*2) = asd.brr_adsr[inst_id];
 		}
 		else{ // 自作BRRでのADSR設定
