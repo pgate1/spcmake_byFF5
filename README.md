@@ -1,6 +1,6 @@
 # spcmake_byFF5
 
-Make a FF5-like spc from your hexadecimal MML using FinalFantasy5 rom.
+Make a FF5-like SPC from your hexadecimal MML using FinalFantasy5 rom.
 The hexadecimal control code sequence of the FF5 sound driver can be described on a text basis.  
 <br>
 ※WARNING  
