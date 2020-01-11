@@ -103,8 +103,8 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 0x1A40 - 0x1A7F　音源音程補正
 0x1A80 - 0x1A8F　常駐波形ADSR
 0x1AC0 - 0x1AFF　音源ADSR
-0x1B00 - 0x1B1F　常駐波形BRRポインタ
-0x1B80 - 0x1BFF　音源BRRポインタ
+0x1B00 - 0x1B1F　常駐波形BRRアドレス
+0x1B80 - 0x1BFF　音源BRRアドレス
 0x1C00 - 0xXXXX　シーケンス
 0x2C00 - 0x47FF　効果音シーケンスと効果音BRR（無くてもいい）
 0x4800 - 0x490D　常駐波形BRR（移動ok）
@@ -130,7 +130,7 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	memcpy(asd.sbrr, rom+0x41E3F+2, asd.sbrr_size);
 //{FILE *fp=fopen("out.bin","wb");fwrite(asd.sbrr,1,asd.sbrr_size,fp);fclose(fp);}
 
-	// 常駐波形BRRのポインタ
+	// 常駐波形BRRアドレス
 	// 先頭2バイトはサイズ
 	// 0x041F4F - 0x041F70 -> 0x1B00 - 0x1B1F
 	// 0x4800-0x48FCを指す
@@ -1148,7 +1148,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 		asd.sbrr_start[  i*2] += brr_adrs_sa;
 		asd.sbrr_start[1+i*2] += brr_adrs_sa;
 	}
-	// 常駐波形BRRポインタ埋め込み
+	// 常駐波形BRRアドレス埋め込み
 	memcpy(ram+0x1B00, asd.sbrr_start, 32);
 
 	// BRR埋め込み
