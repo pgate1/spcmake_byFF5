@@ -94,6 +94,24 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 		return -1;
 	}
 
+/*
+音源使用は32個まで
+
+0x0000 - 0x01FF　ワークメモリ
+0x0200 - 0x19EF　サウンドドライバ
+0x1A00 - 0x1A0F　常駐波形音程補正
+0x1A40 - 0x1A7F　音源音程補正
+0x1A80 - 0x1A8F　常駐波形ADSR
+0x1AC0 - 0x1AFF　音源ADSR
+0x1B00 - 0x1B1F　常駐波形BRRポインタ
+0x1B80 - 0x1BFF　音源BRRポインタ
+0x1C00 - 0xXXXX　シーケンス
+0x2C00 - 0x47FF　効果音シーケンスと効果音BRR（無くてもいい）
+0x4800 - 0x490D　常駐波形BRR（移動ok）
+0x490E - 0xXXXX　音源BRR（移動ok）
+0xD200 - 0xF9FF　エコーバッファ（移動ok）
+0xFA00 - 0xFFFF　ワークメモリ
+*/
 
 	// サウンドドライバの取得
 	// 先頭2バイトはサイズ
@@ -154,11 +172,11 @@ for(i=0; i<0x23; i++){
 }
 */
 	// 音源音程補正の取得
-	// 0x043D1E - 0x043D63 -> 0x1A40 ～ 0x1A7F
+	// 0x043D1E - 0x043D63 -> 0x1A40 - 0x1A7F
 	memcpy(asd.brr_tune, rom+0x43D1E, 70); // 2byte x 35
 
 	// 音源ADSRの取得
-	// 0x043D64 - 0x043DA9 -> 0x1AC0 ～ 0x1AFF
+	// 0x043D64 - 0x043DA9 -> 0x1AC0 - 0x1AFF
 	memcpy(asd.brr_adsr, rom+0x43D64, 70); // 2byte x 35
 
 
@@ -1260,7 +1278,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("spcmake_byFF5 ver.20200107\n");
+	printf("spcmake_byFF5 ver.20200109\n");
 
 #ifdef _DEBUG
 	argc = 3;
@@ -1269,7 +1287,7 @@ int main(int argc, char *argv[])
 #endif
 
 	if(argc!=3){
-		printf("useage : spcmake_byff5.exe input.txt output.spc\n");
+		printf("useage : spcmake_byFF5.exe input.txt output.spc\n");
 		getchar();
 		return -1;
 	}
