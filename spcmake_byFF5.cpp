@@ -1066,6 +1066,9 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	*(uint32*)(header+0xA9) = spc.play_time;
 	// フェードアウト時間(4byte)
 	*(uint32*)(header+0xAC) = spc.fade_time;
+	
+	// used to dump
+	header[0xD1] = 4; // ETC
 
 
 	// サウンドメモリ
