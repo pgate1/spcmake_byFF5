@@ -61,19 +61,21 @@ public:
 			if(brr[i]!=NULL) delete[] brr[i];
 		}
 	}
+
+	int get_akao(const char *rom_fname);
 };
 
 // FinalFantasy5.romからAkaoサウンドドライバ等取得
-int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
+int FF5_AkaoSoundDriver::get_akao(const char *rom_fname)
 {
-	FILE *fp = fopen(fname, "rb");
+	FILE *fp = fopen(rom_fname, "rb");
 	if(fp==NULL){
-		printf("cant open %s.\n", fname);
+		printf("cant open %s.\n", rom_fname);
 		return -1;
 	}
 	struct stat statBuf;
 	int rom_size = 0;
-	if(stat(fname, &statBuf)==0) rom_size = statBuf.st_size;
+	if(stat(rom_fname, &statBuf)==0) rom_size = statBuf.st_size;
 	if(rom_size!=2*1024*1024){
 		printf("FF5のromサイズが違う？ヘッダが付いてる？\n");
 		return -1;
@@ -116,35 +118,35 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	// サウンドドライバ
 	// 先頭2バイトはサイズ
 	// 0x04064D - 0x041E3E -> 0x0200 - 0x19EF
-	asd.driver_size = *(uint16*)(rom+0x4064D);
-	asd.driver = new uint8[asd.driver_size];
-	memcpy(asd.driver, rom+0x4064D+2, asd.driver_size);
+	driver_size = *(uint16*)(rom+0x4064D);
+	driver = new uint8[driver_size];
+	memcpy(driver, rom+0x4064D+2, driver_size);
 //FILE *fp=fopen("out.bin","wb");fwrite(audio.driver,1,audio.driver_size,fp);fclose(fp);
 
 
 	// 常駐波形BRR
 	// 先頭2バイトはサイズ
 	// 0x041E3F - 0x041F4E -> 0x4800 - 0x490D
-	asd.sbrr_size = *(uint16*)(rom+0x41E3F);
-	asd.sbrr = new uint8[asd.sbrr_size];
-	memcpy(asd.sbrr, rom+0x41E3F+2, asd.sbrr_size);
+	sbrr_size = *(uint16*)(rom+0x41E3F);
+	sbrr = new uint8[sbrr_size];
+	memcpy(sbrr, rom+0x41E3F+2, sbrr_size);
 //{FILE *fp=fopen("out.bin","wb");fwrite(asd.sbrr,1,asd.sbrr_size,fp);fclose(fp);}
 
 	// 常駐波形BRRアドレス
 	// 先頭2バイトはサイズ
 	// 0x041F4F - 0x041F70 -> 0x1B00 - 0x1B1F
 	// 0x4800-0x48FCを指す
-	memcpy(asd.sbrr_start, rom+0x41F4F+2, 32); // (2+2)byte x 8
+	memcpy(sbrr_start, rom+0x41F4F+2, 32); // (2+2)byte x 8
 
 	// 常駐波形ADSR
 	// 先頭2バイトはサイズ
 	// 0x041F71 - 0x041F82 -> 0x1A80 - 0x1A8F
-	memcpy(asd.sbrr_adsr, rom+0x41F71+2, 16); // 2byte x 8
+	memcpy(sbrr_adsr, rom+0x41F71+2, 16); // 2byte x 8
 
 	// 常駐波形音程補正
 	// 先頭2バイトはサイズ
 	// 0x041F83 - 0x041F94 -> 0x1A00 - 0x1A0F
-	memcpy(asd.sbrr_tune, rom+0x41F83+2, 16); // 2byte x 8
+	memcpy(sbrr_tune, rom+0x41F83+2, 16); // 2byte x 8
 
 
 	// 音源BRR
@@ -153,13 +155,13 @@ int get_akao(const char *fname, FF5_AkaoSoundDriver &asd)
 	for(i=0; i<35; i++){
 		// 先頭2バイトはサイズ
 		int brr_adrs = *(uint32*)(rom+0x43C6F+i*3) & 0x001FFFFF;
-		asd.brr_size[i] = *(uint16*)(rom+brr_adrs);
-		asd.brr[i] = new uint8[asd.brr_size[i]];
-		memcpy(asd.brr[i], rom+brr_adrs+2, asd.brr_size[i]);
+		brr_size[i] = *(uint16*)(rom+brr_adrs);
+		brr[i] = new uint8[brr_size[i]];
+		memcpy(brr[i], rom+brr_adrs+2, brr_size[i]);
 	}
 	// 音源ループ
 	// 0x043CD8 - 0x043D1D
-	memcpy(asd.brr_loop, rom+0x43CD8, 70); // 2byte x 35
+	memcpy(brr_loop, rom+0x43CD8, 70); // 2byte x 35
 /*
 system("mkdir brr");
 char fname[100];
@@ -173,11 +175,11 @@ for(i=0; i<0x23; i++){
 */
 	// 音源音程補正
 	// 0x043D1E - 0x043D63 -> 0x1A40 - 0x1A7F
-	memcpy(asd.brr_tune, rom+0x43D1E, 70); // 2byte x 35
+	memcpy(brr_tune, rom+0x43D1E, 70); // 2byte x 35
 
 	// 音源ADSR
 	// 0x043D64 - 0x043DA9 -> 0x1AC0 - 0x1AFF
-	memcpy(asd.brr_adsr, rom+0x43D64, 70); // 2byte x 35
+	memcpy(brr_adsr, rom+0x43D64, 70); // 2byte x 35
 
 
 	// 効果音シーケンスと効果音BRR
@@ -186,9 +188,9 @@ for(i=0; i<0x23; i++){
 	// 0x2C00～効果音シーケンスアドレス
 	// 0x3000～効果音シーケンス
 	uint16 eseq_size = *(uint16*)(rom+0x41F95);
-	asd.eseq = new uint8[eseq_size];
-	memcpy(asd.eseq, rom+0x41F95+2, eseq_size);
-	asd.eseq[339*2] = 0xBB; // 効果音339は幻？
+	eseq = new uint8[eseq_size];
+	memcpy(eseq, rom+0x41F95+2, eseq_size);
+	eseq[339*2] = 0xBB; // 効果音339は幻？
 //uint8 buf[0x2C00];memset(buf,0x00,0x2C00);
 //FILE *fp=fopen("out.bin","wb");fwrite(buf,1,0x2C00,fp);fwrite(effect_seq,1,size,fp);fclose(fp);
 /*
@@ -236,7 +238,7 @@ printf("pass %d\n", pass);getchar();
 	return 0;
 }
 
-struct TONE {
+struct FF5_TONE {
 	string brr_fname;
 	int brr_id; // formatter only
 	int inst_id; // 常駐波形 only
@@ -246,7 +248,7 @@ struct TONE {
 	uint8 adsr1, adsr2;
 };
 
-class SPC
+class FF5_SPC
 {
 public:
 	string songname;
@@ -258,7 +260,7 @@ public:
 	uint32 play_time;
 	uint32 fade_time;
 
-	map<int, TONE> brr_map;
+	map<int, FF5_TONE> brr_map;
 
 	uint8 *seq[8];
 	uint32 seq_size[8];
@@ -271,7 +273,7 @@ public:
 	uint16 echo_depth;
 	bool f_surround; // 逆位相サラウンド
 
-	SPC()
+	FF5_SPC()
 	{
 		play_time = 300; // 秒、デフォルト再生時間
 		fade_time = 10000; // ミリ秒、デフォルトフェードアウト時間
@@ -287,7 +289,7 @@ public:
 		echo_depth = 5;
 		f_surround = false;
 	}
-	~SPC()
+	~FF5_SPC()
 	{
 		int i;
 		for(i=0; i<8; i++){
@@ -298,6 +300,36 @@ public:
 		}
 	}
 };
+
+class spcmake_byFF5
+{
+public:
+	FF5_AkaoSoundDriver asd;
+	FF5_SPC spc;
+	string str;
+
+	int read_mml(const char *mml_fname);
+	int formatter(void);
+	int get_sequence(void);
+	int get_ticks(uint8 *seq);
+	int make_spc(const char *spc_fname);
+};
+
+int spcmake_byFF5::read_mml(const char *mml_fname)
+{
+	// シーケンスファイル読み込み
+	FILE *fp = fopen(mml_fname, "r");
+	if(fp==NULL){
+		printf("MMLファイル %s が開けません.\n", mml_fname);
+		return -1;
+	}
+	char buf[1024];
+	while(fgets(buf, 1023, fp)){
+		str += buf;
+	}
+	fclose(fp);
+	return 0;
+}
 
 int line;
 
@@ -342,7 +374,7 @@ int is_cmd(const char c)
 	return 0;
 }
 
-int formatter(string &str, FF5_AkaoSoundDriver &asd, SPC &spc)
+int spcmake_byFF5::formatter(void)
 {
 	line = 1;
 
@@ -371,7 +403,7 @@ int formatter(string &str, FF5_AkaoSoundDriver &asd, SPC &spc)
 //{FILE *fp=fopen("sample_debug.txt","w");fprintf(fp,str.c_str());fclose(fp);}
 
 	char buf[1024];
-	map<int, TONE> tone_map;
+	map<int, FF5_TONE> tone_map;
 	int brr_id = 0;
 
 	int p;
@@ -820,7 +852,7 @@ int formatter(string &str, FF5_AkaoSoundDriver &asd, SPC &spc)
 	return 0;
 }
 
-int get_sequence(string &str, SPC &spc)
+int spcmake_byFF5::get_sequence(void)
 {
 	line = 1;
 
@@ -944,9 +976,52 @@ int get_sequence(string &str, SPC &spc)
 	return 0;
 }
 
+int spcmake_byFF5::get_ticks(uint8 *seq)
+{
+	int tick = 0;
+
+	int ticks[15] = {192, 144, 96, 64, 72, 48, 32, 36, 24, 16, 12, 8, 6, 4, 3};
+
+	int length[48] = { // 0xD0-0xFF
+		1, 1, 2, 3, 2, 3, 3, 4, 1, 4, 1, 3, 1, 2, 1, 1,
+		1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+		2, 1, 1, 2, 3, 2, 3, 3, 2, 4, 3, 3, 1, 1, 1, 1
+	};
+
+	int loop_depth = 0;
+	int mul[10];
+
+	int p = 0;
+	for(;;){
+		uint8 c = seq[p];
+		if(c<=0xD1){
+			int m = 1;
+			for(int i=0; i<loop_depth; i++) m *= mul[i];
+			tick += ticks[c % 15] * m;
+			p++;
+			continue;
+		}
+		if(c==0xF0){ // ループ開始
+			mul[loop_depth++] = (uint32)seq[p+1] + 1;
+		}
+		else if(c==0xF9){ // 条件ジャンプ
+			mul[loop_depth-1]--;
+		}
+		else if(c==0xF1){ // ループ終了
+			loop_depth--;
+		}
+		else if(c==0xF2 || c==0xFA){ // 終了、ジャンプ
+			break;
+		}
+		p += length[c-0xD0];
+	}
+
+	return tick;
+}
+
 #include<time.h>
 
-int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
+int spcmake_byFF5::make_spc(const char *spc_fname)
 {
 	// SPC Header
 	uint8 header[0x100];
@@ -1049,8 +1124,8 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 			*(uint16*)(ram+0x1AC0+i*2) = asd.brr_adsr[inst_id];
 		}
 		else{ // 自作BRRでのADSR設定
-			*(uint16*)(ram+0x1A40+i*2) = 0x0000; // 音程補正はどうしようか？
-			ram[0x1AC0+i*2] = spc.brr_map[i].adsr1;
+			*(uint16*)(ram+0x1A40+i*2) = 0x0000; // 音程補正値変えても変化なし？
+			ram[0x1AC0+i*2  ] = spc.brr_map[i].adsr1;
 			ram[0x1AC0+i*2+1] = spc.brr_map[i].adsr2;
 		}
 	}
@@ -1278,7 +1353,7 @@ int make_spc(SPC &spc, FF5_AkaoSoundDriver &asd, const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("spcmake_byFF5 ver.20200109\n");
+	printf("[ spcmake_byFF5 ver.20200118 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 3;
@@ -1292,29 +1367,17 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	FF5_AkaoSoundDriver asd;
+	spcmake_byFF5 spcmakeff5;
 
-	if(get_akao("FinalFantasy5.rom", asd)){
+	if(spcmakeff5.asd.get_akao("FinalFantasy5.rom")){
 		return -1;
 	}
 
-	string str;
-
-	// シーケンスファイル読み込み
-	FILE *fp = fopen(argv[1], "r");
-	if(fp==NULL){
-		printf("MMLファイル %s が開けません.\n", argv[1]);
+	if(spcmakeff5.read_mml(argv[1])){
 		return -1;
 	}
-	char buf[1024];
-	while(fgets(buf, 1023, fp)){
-		str += buf;
-	}
-	fclose(fp);
 
-	SPC spc;
-
-	if(formatter(str, asd, spc)){
+	if(spcmakeff5.formatter()){
 #ifdef _DEBUG
 	getchar();
 #endif
@@ -1323,14 +1386,22 @@ int main(int argc, char *argv[])
 
 //fp=fopen("out.txt","w");fprintf(fp,str.c_str());fclose(fp);
 
-	printf("songname[%s]\n", spc.songname.c_str());
-	printf("dumper[%s]\n", spc.dumper.c_str());
+	printf("songname[%s]\n", spcmakeff5.spc.songname.c_str());
+	printf("dumper[%s]\n", spcmakeff5.spc.dumper.c_str());
+	printf("\n");
 
-	if(get_sequence(str, spc)){
+	if(spcmakeff5.get_sequence()){
 		return -1;
 	}
 
-	if(make_spc(spc, asd, argv[2])){
+	int i;
+	for(i=0; i<8; i++){
+		printf("  track%d %6d ticks\n", i+1, spcmakeff5.get_ticks(spcmakeff5.spc.seq[i]));
+	}
+	printf("\n");
+//	getchar();
+
+	if(spcmakeff5.make_spc(argv[2])){
 		return -1;
 	}
 
