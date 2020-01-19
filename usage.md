@@ -73,26 +73,26 @@ MVOL_Rに0x80を設定します。
 
 #tone _tone_num "brr_file_name" octave transpose detune attack_rate decay_rate sustain_level sustain_rate_
 
-    #tone 1 "brr/harp.brr" 5 2 0 15 7 7 11 // 自分で用意したBRRファイルを使用する場合
-    #tone 2 "FF5inst:1" 5 0 0 // FF5内蔵波形を使用（オクターブ等指定あり）
-    #tone 3 "FF5inst:5" // FF5内蔵音源を使用（オクターブ等はFF5基準を使用）
+    #tone 1 "brr/harp.brr" 05 02 00 0F 07 07 0B // 自分で用意したBRRファイルを使用する場合
+    #tone 2 "FF5inst:01" 05 00 00 // FF5内蔵波形を使用（オクターブ等指定あり）
+    #tone 3 "FF5inst:05" // FF5内蔵音源を使用（オクターブ等はFF5基準を使用）
     #tone 4 "FF5inst:s0" 5 0 0 // FF5常駐音源を使用（オクターブ等指定あり）
     #tone 5 "FF5inst:s3" // FF5常駐音源を使用（オクターブ等はFF5基準を使用）
 
-FF5内蔵波形はFF5inst:0～34まで指定できます。  
-FF5常駐波形はFF5inst:s0～s7まで指定できます。  
+FF5内蔵波形はFF5inst:00～22(16進数)を指定できます。  
+FF5常駐波形はFF5inst:s0～s7を指定できます。  
 FF5instを指定する場合はオクターブ・トランスポーズ・ディチューン設定を省略することができます。
 この場合、生成されるSPCにはそれぞれのコマンドは埋め込まれません。
 <br>  
 _octave_ (オクターブ)は0以上の値を設定できます。  
-_transpose_ (トランスポーズ)は-128～127の値を設定できます。  
-_detune_ (ディチューン)は-128～127の値を設定できます。
+_transpose_ (トランスポーズ)は80～7F(-128～127)の値を設定できます。  
+_detune_ (ディチューン)は80～7F(-128～127)の値を設定できます。
 <br>  
 自前の.brrを使用する場合はADSRパラメータも指定してください。  
-AttackRate 0～15 大きいほど立ち上がりが早いです。  
+AttackRate 0～F 大きいほど立ち上がりが早いです。  
 DecayRate 0～7 大きいほどSustainLevelになる速度が速いです。  
 SustainLevel 0～7 大きいほど減衰が少ないです。  
-SustainRate 0～31 大きいほど減衰が速いです。
+SustainRate 00～1F 大きいほど減衰が速いです。
 
 ## #track _track_num_
 

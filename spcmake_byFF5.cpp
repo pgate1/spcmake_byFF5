@@ -166,10 +166,10 @@ int FF5_AkaoSoundDriver::get_akao(const char *rom_fname)
 system("mkdir brr");
 char fname[100];
 for(i=0; i<0x23; i++){
-	sprintf(fname, "brr/ff5_%02X.brr", i+1);
+	sprintf(fname, "brr/ff5_%02X.brr", i);
 	FILE *fp = fopen(fname, "wb");
-	fwrite(&audio.brr_loop[i], 1, 2, fp);
-	fwrite(audio.brr[i], 1, audio.brr_size[i], fp);
+	fwrite(&brr_loop[i], 1, 2, fp);
+	fwrite(brr[i], 1, brr_size[i], fp);
 	fclose(fp);
 }
 */
@@ -243,8 +243,8 @@ struct FF5_TONE {
 	int brr_id; // formatter only
 	int inst_id; // 常駐波形 only
 	uint8 octave; // formatter only
-	signed char transpose; // formatter only
-	signed char detune; // formatter only
+	uint8 transpose; // formatter only
+	uint8 detune; // formatter only
 	uint8 adsr1, adsr2;
 };
 
@@ -577,9 +577,9 @@ int spcmake_byFF5::formatter(void)
 				if(brr_fname.substr(0,8)=="FF5inst:"){
 					int ssp = f_stayinst ? 9 : 8;
 					int eep = term_end(brr_fname, ssp);
-					int inst_id = atoi(brr_fname.substr(ssp, eep-ssp).c_str());
-					if(!f_stayinst && (inst_id<0 || inst_id>34)){
-						printf("Error line %d : FF5inst 波形指定は 0～34 としてください.\n", line);
+					int inst_id = strtol(brr_fname.substr(ssp, eep-ssp).c_str(), NULL, 16);
+					if(!f_stayinst && (inst_id<0 || inst_id>0x22)){
+						printf("Error line %d : FF5inst 波形指定は 00～22(16進数) としてください.\n", line);
 						return -1;
 					}
 					if(f_stayinst && (inst_id<0 || inst_id>7)){
@@ -594,6 +594,10 @@ int spcmake_byFF5::formatter(void)
 						printf("Error line %d : BRRファイル %s がありません.\n", line, brr_fname.c_str());
 						return -1;
 					}
+					if((st.st_size-2)%9){
+						printf("Error line %d : BRRファイル %s サイズ異常です.ループアドレスが付加されていない？\n", line, brr_fname.c_str());
+						return -1;
+					}
 				}
 				// 常駐波形じゃなければBRRを追加する
 				if(!f_stayinst){
@@ -606,7 +610,7 @@ int spcmake_byFF5::formatter(void)
 				tone_map[tone_num].brr_fname = brr_fname;
 
 				// パラメータ取得、#toneは一行で記述すること
-				int param[8];
+				uint8 param[8];
 				int param_num;
 				for(param_num=0; param_num<8 && str[ep]!='\0';){
 					sp = ep;
@@ -614,7 +618,7 @@ int spcmake_byFF5::formatter(void)
 					if(str[sp]=='\n') break; // num==7の時ここで抜ければ正常
 					ep = sp;
 					while(str[ep]!=' ' && str[ep]!='\t' && str[ep]!='\r' && str[ep]!='\n' && str[ep]!='\0') ep++;
-					param[param_num++] = atoi(str.substr(sp, ep-sp).c_str());
+					param[param_num++] = strtol(str.substr(sp, ep-sp).c_str(), NULL, 16);
 				}
 				//printf("pn %d\n", param_num);
 
@@ -641,9 +645,9 @@ int spcmake_byFF5::formatter(void)
 						tone_map[tone_num].transpose = param[1];
 						tone_map[tone_num].detune = param[2];
 						// adsr(EB EC ED EE)、パラメータは10進数
-						int *adsr = param + 3;
-						if(!(adsr[0]>=0 && adsr[0]<=15)){
-							printf("Error line %d : Attack rate は 0～15 としてください.\n", line);
+						uint8 *adsr = param + 3;
+						if(!(adsr[0]>=0 && adsr[0]<=0xF)){
+							printf("Error line %d : Attack rate は 0～F としてください.\n", line);
 							return -1;
 						}
 						if(!(adsr[1]>=0 && adsr[1]<=7)){
@@ -654,8 +658,8 @@ int spcmake_byFF5::formatter(void)
 							printf("Error line %d : Sustain lebel は 0～7 としてください.\n", line);
 							return -1;
 						}
-						if(!(adsr[3]>=0 && adsr[3]<=31)){
-							printf("Error line %d : Sustain rate は 0～31 としてください.\n", line);
+						if(!(adsr[3]>=0 && adsr[3]<=0x1F)){
+							printf("Error line %d : Sustain rate は 00～1F としてください.\n", line);
 							return -1;
 						}
 						// ADSR1 1dddaaaa
@@ -772,8 +776,8 @@ int spcmake_byFF5::formatter(void)
 			}
 			else{
 				sprintf(buf_octave, "E4 %02X", tone_map[tone_num].octave);
-				sprintf(buf_transpose, "E7 %02X", (uint8)tone_map[tone_num].transpose);
-				sprintf(buf_detune, "E9 %02X", (uint8)tone_map[tone_num].detune);
+				sprintf(buf_transpose, "E7 %02X", tone_map[tone_num].transpose);
+				sprintf(buf_detune, "E9 %02X", tone_map[tone_num].detune);
 			}
 			sprintf(buf, "EA %02X %s %s %s ",
 				(tone_map[tone_num].brr_fname.substr(0,9)=="FF5inst:s")
@@ -1122,7 +1126,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 		//	if(spc.brr_map[i].brr_fname[8]=='s') continue; // 常駐波形はADSR別途
 			int sp = 8;
 			int ep = term_end(spc.brr_map[i].brr_fname, sp);
-			int inst_id = atoi(spc.brr_map[i].brr_fname.substr(sp, ep-sp).c_str());
+			int inst_id = strtol(spc.brr_map[i].brr_fname.substr(sp, ep-sp).c_str(), NULL, 16);
 			*(uint16*)(ram+0x1A40+i*2) = asd.brr_tune[inst_id];
 			*(uint16*)(ram+0x1AC0+i*2) = asd.brr_adsr[inst_id];
 		}
@@ -1246,7 +1250,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 			//	if(brr_fname[8]=='s') continue; // 常駐波形は飛ばす
 				int sp = 8;
 				int ep = term_end(brr_fname, sp);
-				int inst_id = atoi(brr_fname.substr(sp, ep-sp).c_str());
+				int inst_id = strtol(brr_fname.substr(sp, ep-sp).c_str(), NULL, 16);
 				brr_size = asd.brr_size[inst_id] + 2; // 先頭2バイトループ追加
 				brr_data = new uint8[brr_size];
 				memcpy(brr_data+2, asd.brr[inst_id], asd.brr_size[inst_id]);
@@ -1356,7 +1360,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("[ spcmake_byFF5 ver.20200118 ]\n\n");
+	printf("[ spcmake_byFF5 ver.20200119 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 3;
