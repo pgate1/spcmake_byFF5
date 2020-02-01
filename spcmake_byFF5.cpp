@@ -165,7 +165,7 @@ int FF5_AkaoSoundDriver::get_akao(const char *rom_fname)
 /*
 system("mkdir brr");
 char fname[100];
-for(i=0; i<0x23; i++){
+for(i=0; i<35; i++){
 	sprintf(fname, "brr/ff5_%02X.brr", i);
 	FILE *fp = fopen(fname, "wb");
 	fwrite(&brr_loop[i], 1, 2, fp);
@@ -644,7 +644,7 @@ int spcmake_byFF5::formatter(void)
 						tone_map[tone_num].octave = param[0];
 						tone_map[tone_num].transpose = param[1];
 						tone_map[tone_num].detune = param[2];
-						// adsr(EB EC ED EE)、パラメータは10進数
+						// adsr(EB EC ED EE)、パラメータは16進数
 						uint8 *adsr = param + 3;
 						if(!(adsr[0]>=0 && adsr[0]<=0xF)){
 							printf("Error line %d : Attack rate は 0～F としてください.\n", line);
