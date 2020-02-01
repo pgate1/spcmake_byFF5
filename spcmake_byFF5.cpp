@@ -116,37 +116,37 @@ int FF5_AkaoSoundDriver::get_akao(const char *rom_fname)
 */
 
 	// サウンドドライバ
-	// 先頭2バイトはサイズ
-	// 0x04064D - 0x041E3E -> 0x0200 - 0x19EF
+	// 0x04064D 2バイトはサイズ
+	// 0x04064F - 0x041E3E -> 0x0200 - 0x19EF
 	driver_size = *(uint16*)(rom+0x4064D);
 	driver = new uint8[driver_size];
-	memcpy(driver, rom+0x4064D+2, driver_size);
+	memcpy(driver, rom+0x4064F, driver_size);
 //FILE *fp=fopen("out.bin","wb");fwrite(audio.driver,1,audio.driver_size,fp);fclose(fp);
 
 
 	// 常駐波形BRR
-	// 先頭2バイトはサイズ
-	// 0x041E3F - 0x041F4E -> 0x4800 - 0x490D
+	// 0x041E3F 2バイトはサイズ
+	// 0x041E41 - 0x041F4E -> 0x4800 - 0x490D
 	sbrr_size = *(uint16*)(rom+0x41E3F);
 	sbrr = new uint8[sbrr_size];
-	memcpy(sbrr, rom+0x41E3F+2, sbrr_size);
+	memcpy(sbrr, rom+0x41E41, sbrr_size);
 //{FILE *fp=fopen("out.bin","wb");fwrite(asd.sbrr,1,asd.sbrr_size,fp);fclose(fp);}
 
 	// 常駐波形BRRアドレス
-	// 先頭2バイトはサイズ
-	// 0x041F4F - 0x041F70 -> 0x1B00 - 0x1B1F
+	// 0x041F4F 2バイトはサイズ
+	// 0x041F51 - 0x041F70 -> 0x1B00 - 0x1B1F
 	// 0x4800-0x48FCを指す
-	memcpy(sbrr_start, rom+0x41F4F+2, 32); // (2+2)byte x 8
+	memcpy(sbrr_start, rom+0x41F51, 32); // (2+2)byte x 8
 
 	// 常駐波形ADSR
-	// 先頭2バイトはサイズ
-	// 0x041F71 - 0x041F82 -> 0x1A80 - 0x1A8F
-	memcpy(sbrr_adsr, rom+0x41F71+2, 16); // 2byte x 8
+	// 0x041F71 2バイトはサイズ
+	// 0x041F73 - 0x041F82 -> 0x1A80 - 0x1A8F
+	memcpy(sbrr_adsr, rom+0x41F73, 16); // 2byte x 8
 
 	// 常駐波形音程補正
-	// 先頭2バイトはサイズ
-	// 0x041F83 - 0x041F94 -> 0x1A00 - 0x1A0F
-	memcpy(sbrr_tune, rom+0x41F83+2, 16); // 2byte x 8
+	// 0x041F83 2バイトはサイズ
+	// 0x041F85 - 0x041F94 -> 0x1A00 - 0x1A0F
+	memcpy(sbrr_tune, rom+0x41F85, 16); // 2byte x 8
 
 
 	// 音源BRR
@@ -183,13 +183,13 @@ for(i=0; i<0x23; i++){
 
 
 	// 効果音シーケンスと効果音BRR
-	// 先頭2バイトはサイズ
-	// 0x041F95 - 0x043B96 -> 0x2C00 - 0x47FF
+	// 0x041F95 2バイトはサイズ
+	// 0x041F97 - 0x043B96 -> 0x2C00 - 0x47FF
 	// 0x2C00～効果音シーケンスアドレス
 	// 0x3000～効果音シーケンス
 	uint16 eseq_size = *(uint16*)(rom+0x41F95);
 	eseq = new uint8[eseq_size];
-	memcpy(eseq, rom+0x41F95+2, eseq_size);
+	memcpy(eseq, rom+0x41F97, eseq_size);
 	eseq[339*2] = 0xBB; // 効果音339は幻？
 //uint8 buf[0x2C00];memset(buf,0x00,0x2C00);
 //FILE *fp=fopen("out.bin","wb");fwrite(buf,1,0x2C00,fp);fwrite(effect_seq,1,size,fp);fclose(fp);
