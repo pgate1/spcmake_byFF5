@@ -1095,7 +1095,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	uint8 dsp_reg[128];
 	memset(dsp_reg, 0x00, 128);
 	dsp_reg[0x0C] = 0x7F; // MVOL_L
-	dsp_reg[0x1C] = spc.f_surround ? 0x80 : 0x7F; // MVOL_R
+	dsp_reg[0x1C] = spc.f_surround ? 0x81 : 0x7F; // MVOL_R
 	dsp_reg[0x5D] = 0x1B; // DIR
 //	dsp_reg[0x6D] = 0xD2; // ESA
 //	dsp_reg[0x7D] = 0x05; // EDL
