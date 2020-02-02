@@ -799,7 +799,7 @@ int spcmake_byFF5::formatter(void)
 			int lp = p;
 			for(lp=sp; lp>=0; lp--){
 				if(str[lp]=='[') break;
-				// ループ中のF9ジャンプ処理
+				// ループ中のブレイク処理
 				if(str[lp]=='|'){
 					str.insert(p+3, "jump_dest ");
 					sprintf(buf, "F9 %02X jump_src ", (uint8)loop_count);
