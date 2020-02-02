@@ -125,7 +125,7 @@ int FF5_AkaoSoundDriver::get_akao(const char *rom_fname)
 
 
 	// 常駐波形BRR
-	// 0x041E3F 2バイトはサイズ
+	// 0x041E3F 2バイトはサイズ(0x010E)
 	// 0x041E41 - 0x041F4E -> 0x4800 - 0x490D
 	sbrr_size = *(uint16*)(rom+0x41E3F);
 	sbrr = new uint8[sbrr_size];
@@ -1236,7 +1236,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	// BRR埋め込み
 	// 20200105 すでに埋め込んだBRRは使いまわす
 	map<string, pair<uint16, uint16> > brr_put_map;
-	uint16 brr_offset = spc.brr_offset + 0x010E;
+	uint16 brr_offset = spc.brr_offset + asd.sbrr_size;
 	uint32 adrs_index = 0;
 	for(i=0; i<spc.brr_map.size(); i++){
 		string brr_fname = spc.brr_map[i].brr_fname;
