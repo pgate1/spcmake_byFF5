@@ -1370,7 +1370,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("[ spcmake_byFF5 ver.20200203 ]\n\n");
+	printf("[ spcmake_byFF5 ver.20200812 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 5;
