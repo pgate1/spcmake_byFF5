@@ -939,6 +939,7 @@ int spcmake_byFF5::get_sequence(void)
 				if(str.substr(lp, 9)=="jump_dest"){
 					str.erase(lp, 9); // dest削除
 					// ジャンプ先相対値を入れておく(必須)
+					jp--; // 20200820 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
 					char buf[10];
 					sprintf(buf, "%02X %02X ", (uint8)jp, (uint8)(jp>>8));
 					str.replace(p, 8, buf); // src置き換え
@@ -1370,7 +1371,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("[ spcmake_byFF5 ver.20200812 ]\n\n");
+	printf("[ spcmake_byFF5 ver.20200820 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 5;
