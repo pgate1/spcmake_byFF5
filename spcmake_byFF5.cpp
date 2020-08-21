@@ -26,7 +26,7 @@ public:
 	uint8 *driver;
 
 	// 効果音シーケンス
-//	uint32 eseq_size;
+	uint32 eseq_size;
 	uint8 *eseq;
 
 	// 常駐波形
@@ -189,7 +189,7 @@ for(i=0; i<FF5_BRR_NUM; i++){
 	// 0x041F97 - 0x043B96 -> 0x2C00 - 0x47FF
 	// 0x2C00～効果音シーケンスアドレス
 	// 0x3000～効果音シーケンス
-	uint16 eseq_size = *(uint16*)(rom+0x41F95);
+	eseq_size = *(uint16*)(rom+0x41F95);
 	eseq = new uint8[eseq_size];
 	memcpy(eseq, rom+0x41F97, eseq_size);
 	eseq[339*2] = 0xBB; // 効果音339は幻？
@@ -274,6 +274,7 @@ public:
 	bool f_brr_echo_overcheck;
 	uint16 echo_depth;
 	bool f_surround; // 逆位相サラウンド
+	bool f_eseq_out; // 効果音シーケンス埋め込み
 
 	FF5_SPC()
 	{
@@ -290,6 +291,7 @@ public:
 		f_brr_echo_overcheck = false;
 		echo_depth = 5;
 		f_surround = false;
+		f_eseq_out = true;
 	}
 	~FF5_SPC()
 	{
@@ -512,6 +514,7 @@ int spcmake_byFF5::formatter(void)
 			}
 			// BRRオフセット
 			if(str.substr(p, 11)=="#brr_offset"){
+				spc.f_eseq_out = false;
 				int sp = skip_space(str, p+11);
 				int ep = term_end(str, sp);
 				if(str.substr(sp, ep-sp)=="auto"){
@@ -800,19 +803,20 @@ int spcmake_byFF5::formatter(void)
 			int sp = skip_space(str, p+1);
 			int ep = num_end(str, sp);
 			int loop_count = atoi(str.substr(sp, ep-sp).c_str());
+			// "]" → "F1 "
 			str.replace(p, ep-p, "F1 ");
 			// ループの先頭 [ を見つける
-			int jump_dest = 0;
+			int break_dest = 0;
 			int lp = p;
 			for(lp=sp; lp>=0; lp--){
 				if(str[lp]=='[') break;
-				// ループ中のブレイク処理
+				// ループ中の条件ジャンプ処理
 				if(str[lp]=='|'){
-					str.insert(p+3, "jump_dest ");
-					sprintf(buf, "F9 %02X jump_src ", (uint8)loop_count);
+					str.insert(p+3, "break_dest ");
+					sprintf(buf, "F9 %02X break_src ", (uint8)loop_count);
 					str.replace(lp, 1, buf);
-					// "F1 " + "jump_dest " + "F9 XX jump_src "
-					jump_dest = 3 + 10 + 15;
+					// "|" → "F9 XX break_src " + "break_dest "
+					break_dest = (16-1) + 11;
 				}
 			}
 			if(lp==-1){
@@ -822,7 +826,7 @@ int spcmake_byFF5::formatter(void)
 			// "[" → "F0 02 "
 			sprintf(buf, "F0 %02X ", (uint8)(loop_count-1));
 			str.replace(lp, 1, buf);
-			p += (6-1) + (jump_dest-1);
+			p += (6-1) + (3-1) + break_dest;
 			continue;
 		}
 		// 10進数から16進数に変換
@@ -858,6 +862,7 @@ int spcmake_byFF5::formatter(void)
 	// 最後に#track_end_markを付加
 	str.insert(p, "#9", 2);
 
+// フォーマット処理したものをテスト出力
 //FILE *fp=fopen("sample_debug.txt","w");fprintf(fp,str.c_str());fclose(fp);
 
 	return 0;
@@ -931,15 +936,15 @@ int spcmake_byFF5::get_sequence(void)
 			continue;
 		}
 		// F9コマンドの処理
-		// F9 01 jump_src  XX XX XXF1 jump_dest 
-		if(seq_size>1 && seq[seq_size-2]==0xF9 && str.substr(p, 8)=="jump_src"){
+		// F9 01 break_src  XX XX XXF1 break_dest 
+		if(seq_size>1 && seq[seq_size-2]==0xF9 && str.substr(p, 9)=="break_src"){
 			int jp = 2; // F9からの相対アドレス、2で合う
 			int lp;
-			for(lp=p+8; str[lp]!='#'; lp++){
-				if(str.substr(lp, 9)=="jump_dest"){
-					str.erase(lp, 9); // dest削除
+			for(lp=p+9; str[lp]!='#'; lp++){
+				if(str.substr(lp, 10)=="break_dest"){
+					str.erase(lp, 10); // dest削除
 					// ジャンプ先相対値を入れておく(必須)
-					jp--; // 20200820 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
+					jp--; // 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
 					char buf[10];
 					sprintf(buf, "%02X %02X ", (uint8)jp, (uint8)(jp>>8));
 					str.replace(p, 8, buf); // src置き換え
@@ -1126,7 +1131,9 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	// 常駐波形音程補正
 	memcpy(ram+0x1A00, asd.sbrr_tune, 16);
 	// 効果音シーケンス等
-//	memcpy(ram+0x2C00, asd.eseq, asd.eseq_size); // 使用しない
+	if(spc.f_eseq_out){ // BRRオフセット指定無ければ埋め込む
+		memcpy(ram+0x2C00, asd.eseq, asd.eseq_size);
+	}
 
 	// 音程補正、ADSR埋め込み
 	int i;
@@ -1172,6 +1179,11 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	printf("SEQ end address 0x%04X\n", seq_adrs_end); //getchar();
 	if(seq_adrs_end >= spc.brr_offset){
 		printf("Error : #brr_offset 0x%04X がシーケンスと重なっています.\n", spc.brr_offset);
+		delete[] ram;
+		return -1;
+	}
+	if(spc.f_eseq_out && seq_adrs_end >= 0x2C00){
+		printf("Error : シーケンスが効果音シーケンスと重なっています.\n");
 		delete[] ram;
 		return -1;
 	}
@@ -1371,7 +1383,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("[ spcmake_byFF5 ver.20200820 ]\n\n");
+	printf("[ spcmake_byFF5 ver.20200821 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 5;
