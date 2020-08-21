@@ -944,7 +944,8 @@ int spcmake_byFF5::get_sequence(void)
 				if(str.substr(lp, 10)=="break_dest"){
 					str.erase(lp, 10); // dest削除
 					// ジャンプ先相対値を入れておく(必須)
-					jp--; // 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
+				//	jp--; // 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
+					// ↑その必要はなさそう
 					char buf[10];
 					sprintf(buf, "%02X %02X ", (uint8)jp, (uint8)(jp>>8));
 					str.replace(p, 8, buf); // src置き換え
@@ -1097,7 +1098,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	ram[0x009C] = 0x80; // テンポ
 	ram[0x009E] = 0x80; // 効果音テンポ
 	ram[0x00A8] = 0x80; // 音程
-	ram[0x00B4] = 0x09; // 効果音エコー
+//	ram[0x00B4] = 0x09; // 効果音エコー
 	ram[0x00B8] = 0xFF; // ボリューム関連
 	ram[0x00C3] = 0x08; // パン(下位4bit) ok
 	ram[0x00C4] = 0x0F; // ボリューム関連(下位4bit) ok
@@ -1386,7 +1387,7 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 
 int main(int argc, char *argv[])
 {
-	printf("[ spcmake_byFF5 ver.20200821 ]\n\n");
+	printf("[ spcmake_byFF5 ver.20200822 ]\n\n");
 
 #ifdef _DEBUG
 	argc = 5;
