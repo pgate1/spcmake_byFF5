@@ -937,7 +937,7 @@ int spcmake_byFF5::get_sequence(void)
 		}
 		// F9コマンドの処理
 		// F9 01 break_src  XX XX XXF1 break_dest 
-		if(seq_size>1 && seq[seq_size-2]==0xF9 && str.substr(p, 9)=="break_src"){
+		if(seq_size>=2 && seq[seq_size-2]==0xF9 && str.substr(p, 9)=="break_src"){
 			int jp = 2; // F9からの相対アドレス、2で合う
 			int lp;
 			for(lp=p+9; str[lp]!='#'; lp++){
