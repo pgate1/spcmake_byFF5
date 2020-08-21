@@ -1092,9 +1092,12 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	uint8 *ram = new uint8[0x10000];
 	memset(ram, 0x00, 0x10000);
 	ram[0x007D] = 0x01; // プログラム関連
-	ram[0x007E] = 0xFF; // プログラム関連
+	ram[0x007E] = 0xFF; // 開始タイミング
+	ram[0x0092] = 0x80; // 効果音パン
 	ram[0x009C] = 0x80; // テンポ
+	ram[0x009E] = 0x80; // 効果音テンポ
 	ram[0x00A8] = 0x80; // 音程
+	ram[0x00B4] = 0x09; // 効果音エコー
 	ram[0x00B8] = 0xFF; // ボリューム関連
 	ram[0x00C3] = 0x08; // パン(下位4bit) ok
 	ram[0x00C4] = 0x0F; // ボリューム関連(下位4bit) ok
