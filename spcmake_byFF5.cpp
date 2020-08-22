@@ -944,8 +944,7 @@ int spcmake_byFF5::get_sequence(void)
 				if(str.substr(lp, 10)=="break_dest"){
 					str.erase(lp, 10); // dest削除
 					// ジャンプ先相対値を入れておく(必須)
-				//	jp--; // 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
-					// ↑その必要はなさそう
+					jp--; // 多重ループ内でbreakを有効にするためにはF1にジャンプする必要がある
 					char buf[10];
 					sprintf(buf, "%02X %02X ", (uint8)jp, (uint8)(jp>>8));
 					str.replace(p, 8, buf); // src置き換え
