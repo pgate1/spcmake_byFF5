@@ -898,7 +898,7 @@ int spcmake_byFF5::formatter(void)
 			p++;
 			continue;
 		}
-		
+
 		// トラックループ
 		if(str[p]=='L' && is_space(str[p-1]) && is_space(str[p+1])){
 			continue;
@@ -1052,7 +1052,7 @@ int spcmake_byFF5::get_sequence(void)
 
 int spcmake_byFF5::get_ticks(int track)
 {
-	uint8 *seq = spc.seq[track];
+	const uint8 *seq = spc.seq[track];
 
 	int tick = 0;
 
@@ -1273,10 +1273,10 @@ int spcmake_byFF5::make_spc(const char *spc_fname)
 	}
 	*(uint16*)(ram+0x1C12) = seq_rom_adrs_end; // シーケンスアドレスエンド+1を指す
 
-	// トラックループアドレス埋め込み
-	// FA XX XX
 	{
 	int t, i;
+	// トラックループアドレス埋め込み
+	// FA XX XX
 	for(t=0; t<8; t++){
 	//	printf("seq%d_size %d\n", t, spc.seq_size[t]);
 		if(spc.track_loop[t]!=0xFFFF){ // Lがある場合
