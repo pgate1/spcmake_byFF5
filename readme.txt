@@ -3,7 +3,7 @@
                                  　　　　      by pgate1
 
 FF5サウンドドライバやFF5波形を使ってSPCを生成します。
-MMLはFF5サウンドドライバ向けに特化したものです。
+HexMMLはFF5サウンドドライバ向けに特化したものです。
 
 ※警告
 生成されるSPCにはFF5のサウンドドライバや波形データが含まれています。
@@ -15,7 +15,7 @@ SPCデータを容易に公開されることはご遠慮ください。
 ご自身でFF5カートリッジからFinalFantasy5.romをダンプする。
 FinalFantasy5.romをspcmake_byFF5.exeと同じ場所に置く。
 必要であれば.brrを用意する。
-sample.txt のようなMMLを書く。
+sample.txt のようなHexMMLを書く。
 spcmake_byFF5.batをダブルクリック。
 エラーが無ければsample.spcが生成される。
 
@@ -29,6 +29,9 @@ spcmake_byFF5.batをダブルクリック。
 
 
 ▼ 履歴
+
+2020/08/25
+ジャンプコマンド(J)を追加。
 
 2020/08/23
 #swap<>を追加。
