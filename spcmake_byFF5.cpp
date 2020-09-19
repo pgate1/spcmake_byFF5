@@ -1003,7 +1003,7 @@ int spcmake_byFF5::formatter(void)
 	for(mit=tone_map.begin(); mit!=tone_map.end(); ++mit){
 		if(mit->second.used==false){
 			printf("Warning line %d : #tone %s \"%s\" ‚ÍŽg—p‚³‚ê‚Ä‚¢‚Ü‚¹‚ñ.\n", mit->second.line, mit->first.c_str(), mit->second.brr_fname.c_str());
-			getchar();
+		//	getchar();
 		}
 	}
 
