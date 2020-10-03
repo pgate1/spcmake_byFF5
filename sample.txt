@@ -9,20 +9,22 @@
 #brr_echo_overcheck // BRR領域がエコーバッファにかかるかチェック
 //#echo_depth 7 // デフォルトは5
 //#surround // 逆位相サラウンド有効
-
+//#auto_assign_toneid // tone_id省略時に自動割り当て
 
 /*11111111111111111111111111111111111111111111111111111111111111111111*/
 // メロディメイン
 #track 1
 
 /*
-#tone tone番号 "brrファイルパス" E4 E7 E9  EB EC ED EE (各パラメータは16進数で)
+#tone tone_id "brrファイルパス" E4 E7 E9  EB EC ED EE (各パラメータは16進数で)
 #tone 32 "brr/ff5_0C.brr" 06 05 00  0F 07 07 0B // ハープ
 FF5波形の使用(00～34) E4 E7 E9 (もしくはパラメータ指定なし)
 #tone 32 "FF5inst:0C" 06 00 00
 FF5常駐波形の使用(s0～s7) E4 E7 E9 (もしくはパラメータ指定なし)
 #tone 32 "FF5inst:s0" 5 0 0
 #tone 32 "FF5inst:s3"
+#tone notuse "FF5inst:11"
+#tone "FF5inst:11"
 */
 
 // 初期化

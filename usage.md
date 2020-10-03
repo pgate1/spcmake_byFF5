@@ -31,7 +31,7 @@
 
 ## #dumper "_pgate1_"
 
-MMLの作成者を設定します。つまりあなたの名前。
+HexMMLの作成者を設定します。つまりあなたの名前。
 
 ## #comment "_nanikakaku_"
 
@@ -69,16 +69,21 @@ _depth_ はエコーの深さです。1(浅い)～15(深い)の間で指定し�
 逆位相サラウンドを有効にするオプション設定です。  
 MVOL_Rに0x7Fの代わりに0x81を設定します。
 
-## #swap<>
+## #swap<> #swap><
 
 オクターブ変更コマンド < \> の機能を入れ替えます。
+
+## #auto_assign_toneid
+
+これを宣言すると、tone宣言で _tone_id_ を省略できます。
+省略された _tone_id_ には32から順に内部idが割り当てられます。
 
 ## #tone (音色定義)
 
 音色を設定します。
 基本的に音色を使用するトラック宣言の前に定義します。
 
-#tone _tone_num "brr_file_name" octave transpose detune attack_rate decay_rate sustain_level sustain_rate_
+#tone _tone_id "brr_file_name" octave transpose detune attack_rate decay_rate sustain_level sustain_rate_
 
     #tone 1 "brr/harp.brr" 05 02 00 0F 07 07 0B // 自分で用意したBRRファイルを使用する場合
     #tone 2 "FF5inst:01" 05 00 00 // FF5内蔵波形を使用（オクターブ等指定あり）
@@ -86,7 +91,7 @@ MVOL_Rに0x7Fの代わりに0x81を設定します。
     #tone 4 "FF5inst:s0" 5 0 0 // FF5常駐音源を使用（オクターブ等指定あり）
     #tone 5 "FF5inst:s3" // FF5常駐音源を使用（オクターブ等はFF5基準を使用）
 
-_tone_num_ 数字（例：1, 3, 0A, 1C）や、文字列（例：base, TAM）を宣言します。
+_tone_id_ 数字（例：1, 3, 0A, 1C）や、文字列（例：base, TAM）を宣言します。
   
 FF5内蔵波形は FF5inst:00～22(16進数) を指定できます。  
 FF5常駐波形は FF5inst:s0～s7 を指定できます。  
@@ -102,6 +107,8 @@ _attack_rate_ 0～F 大きいほど立ち上がりが早いです。
 _decay_rate_ 0～7 大きいほどSustainLevelになる速度が速いです。  
 _sustain_level_ 0～7 大きいほど減衰が少ないです。  
 _sustain_rate_ 00～1F 大きいほど減衰が速いです。
+  
+今のところtone宣言は32個までとさせてください。
 
 ## #track _track_num_
 
@@ -185,6 +192,6 @@ _n_ は効果音番号で 0～353 までです。
 
 ## !
 
-この記号以降のMMLコンパイルをストップします。
+この記号以降のコンパイルをストップします。
 
 以上。
