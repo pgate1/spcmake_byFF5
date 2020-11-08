@@ -2,7 +2,7 @@
 #gametitle "Doki Doki Majo Shinpan 2"
 #artist "Yohei Shiokawa"
 #dumper "pgate1"
-#comment "feat. FFV"
+#comment "feat. Final Fantasy V"
 
 #length 3:10 6000 // 再生時間 フェードアウト時間(ミリ秒)
 #brr_offset auto // デフォルトは0x4800
