@@ -1,4 +1,6 @@
+//#pragma once
 
+#pragma warning( disable : 4996 )
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -74,7 +76,7 @@ vector<int16> decode_brr(const uint8 *brr, int size, bool *ptr_looped)
 				S2 = S1;
 				S1 = out;
 
-				raw_samples.push_back(out << 1);
+				raw_samples.push_back((int16)(out << 1));
 			}
 		}
 
