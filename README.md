@@ -16,4 +16,4 @@ Change history is <a href=readme.txt>readme.txt</a>.
 FF4 version <a href=https://github.com/pgate1/spcmake_byFF4>spcmake_byFF4</a><br>
 FF6 version <a href=https://github.com/pgate1/spcmake_byFF6>spcmake_byFF6</a><br>
   
-<a href=https://nico.ms/sm37791800>"Dancing Dagger"</a> made by spcmake_byFF5.
+<a href=https://nico.ms/sm40690810>"Dancing Dagger"</a> made by spcmake_byFF5.
